@@ -1,0 +1,397 @@
+
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: var(--font-sans); }
+.tabs { display: flex; gap: 4px; border-bottom: 0.5px solid var(--color-border-tertiary); margin-bottom: 1.5rem; }
+.tab { padding: 8px 16px; font-size: 13px; cursor: pointer; border: none; background: none; color: var(--color-text-secondary); border-bottom: 2px solid transparent; transition: all 0.15s; }
+.tab.active { color: var(--color-text-primary); border-bottom: 2px solid var(--color-text-primary); font-weight: 500; }
+.tab:hover { color: var(--color-text-primary); }
+.section { display: none; }
+.section.active { display: block; }
+.card { background: var(--color-background-primary); border: 0.5px solid var(--color-border-tertiary); border-radius: var(--border-radius-lg); padding: 1rem 1.25rem; margin-bottom: 1rem; }
+.metric { background: var(--color-background-secondary); border-radius: var(--border-radius-md); padding: 1rem; }
+.metric-label { font-size: 12px; color: var(--color-text-secondary); margin-bottom: 4px; }
+.metric-val { font-size: 22px; font-weight: 500; color: var(--color-text-primary); }
+.grid-5 { display: grid; grid-template-columns: repeat(5, minmax(0,1fr)); gap: 10px; margin-bottom: 1rem; }
+.grid-2 { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); gap: 10px; margin-bottom: 1rem; }
+label { font-size: 13px; color: var(--color-text-secondary); display: block; margin-bottom: 4px; }
+input, select, textarea { width: 100%; }
+textarea { resize: vertical; min-height: 60px; }
+.row { display: flex; gap: 10px; margin-bottom: 10px; flex-wrap: wrap; }
+.row .field { flex: 1; min-width: 120px; }
+.btn { padding: 8px 18px; border-radius: var(--border-radius-md); font-size: 13px; font-weight: 500; cursor: pointer; transition: all 0.15s; border: 0.5px solid var(--color-border-secondary); background: none; color: var(--color-text-primary); }
+.btn:hover { background: var(--color-background-secondary); }
+.btn-primary { background: var(--color-text-primary); color: var(--color-background-primary); border: none; }
+.btn-primary:hover { opacity: 0.85; background: var(--color-text-primary); }
+.btn-danger-sm { background: none; border: 0.5px solid var(--color-border-secondary); color: #a32d2d; font-size: 11px; padding: 3px 8px; border-radius: var(--border-radius-md); cursor: pointer; }
+.btn-danger-sm:hover { background: #fdecea; }
+.btn-red { background: none; border: 0.5px solid #e24b4a; color: #a32d2d; font-size: 13px; padding: 7px 14px; border-radius: var(--border-radius-md); cursor: pointer; font-weight: 500; }
+.btn-red:hover { background: #fcebeb; }
+.badge { display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 500; }
+.badge-win  { background:#eaf3de; color:#3b6d11; }
+.badge-loss { background:#fcebeb; color:#a32d2d; }
+.badge-meta { background:#eaf3de; color:#3b6d11; }
+.badge-stop { background:#fcebeb; color:#a32d2d; }
+.badge-ok   { background:#e6f1fb; color:#185fa5; }
+.badge-err  { background:#faeeda; color:#854f0b; }
+.badge-meio { background:#EEEDFE; color:#3C3489; }
+.badge-noite{ background:#26215C; color:#CECBF6; }
+.badge-op1  { background:#E1F5EE; color:#085041; }
+.badge-op2  { background:#FAEEDA; color:#633806; }
+table { width:100%; font-size:12px; border-collapse:collapse; }
+th { text-align:left; font-weight:500; color:var(--color-text-secondary); padding:6px 8px; border-bottom:0.5px solid var(--color-border-tertiary); font-size:11px; }
+td { padding:7px 8px; border-bottom:0.5px solid var(--color-border-tertiary); color:var(--color-text-primary); vertical-align:middle; }
+tr:last-child td { border-bottom:none; }
+.pos { color:#3b6d11; }
+.neg { color:#a32d2d; }
+h3 { font-size:13px; font-weight:500; color:var(--color-text-secondary); margin-bottom:10px; text-transform:uppercase; letter-spacing:0.04em; }
+.sep { height:0.5px; background:var(--color-border-tertiary); margin:1.25rem 0; }
+.soros-box { background:var(--color-background-secondary); border-radius:var(--border-radius-md); padding:10px 14px; margin-bottom:10px; }
+.chart-wrap { position:relative; width:100%; height:200px; }
+.empty-state { text-align:center; padding:2rem; color:var(--color-text-tertiary); font-size:13px; }
+</style>
+
+<h2 class="sr-only">Diário de Trade — Danrlei Dolzan.</h2>
+
+<div style="display:flex;align-items:center;gap:10px;margin-bottom:1.5rem;padding:1rem 0 0;">
+  <i class="ti ti-chart-candle" style="font-size:22px;color:var(--color-text-secondary);" aria-hidden="true"></i>
+  <span style="font-size:18px;font-weight:500;">Diário de Trade</span>
+  <span style="font-size:12px;color:var(--color-text-secondary);margin-left:auto;" id="total-sessoes">carregando...</span>
+</div>
+
+<div class="tabs">
+  <button class="tab active" onclick="switchTab('registrar')"><i class="ti ti-plus" aria-hidden="true"></i> Registrar</button>
+  <button class="tab" onclick="switchTab('dashboard')"><i class="ti ti-chart-bar" aria-hidden="true"></i> Dashboard</button>
+  <button class="tab" onclick="switchTab('historico')"><i class="ti ti-list" aria-hidden="true"></i> Histórico</button>
+</div>
+
+<!-- REGISTRAR -->
+<div id="sec-registrar" class="section active">
+  <div class="card">
+    <h3>Nova sessão</h3>
+    <div class="row">
+      <div class="field"><label>Data</label><input type="date" id="inp-data" /></div>
+      <div class="field"><label>Período</label>
+        <select id="inp-periodo"><option value="meio_dia">Meio dia</option><option value="noite">Noite</option></select>
+      </div>
+      <div class="field"><label>Sessão</label>
+        <select id="inp-resultado"><option value="meta">Meta</option><option value="stop">Stop</option></select>
+      </div>
+      <div class="field"><label>Disciplina</label>
+        <select id="inp-disciplina"><option value="ok">Fiz tudo certo</option><option value="erro">Cometi erro</option></select>
+      </div>
+    </div>
+    <div class="sep"></div>
+    <h3>Entradas (Soros nível 2)</h3>
+    <div class="soros-box">
+      <div style="font-size:12px;font-weight:500;margin-bottom:8px;color:var(--color-text-secondary);">Entrada 1</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <div style="flex:1;min-width:130px;"><label>Setup</label>
+          <select id="e1-setup"><option value="op1">OP-01 — Tendência</option><option value="op2">OP-02 — Lateral</option></select>
+        </div>
+        <div style="flex:1;min-width:90px;"><label>Valor (R$)</label><input type="number" id="e1-valor" min="0" step="0.01" placeholder="0,00" /></div>
+        <div style="flex:1;min-width:90px;"><label>Resultado</label>
+          <select id="e1-res"><option value="win">Win</option><option value="loss">Loss</option></select>
+        </div>
+      </div>
+    </div>
+    <div class="soros-box" id="soros-2-box">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+        <span style="font-size:12px;font-weight:500;color:var(--color-text-secondary);">Entrada 2 (Soros)</span>
+        <button class="btn-danger-sm" onclick="toggleSoros2()">Remover</button>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;">
+        <div style="flex:1;min-width:130px;"><label>Setup</label>
+          <select id="e2-setup"><option value="op1">OP-01 — Tendência</option><option value="op2">OP-02 — Lateral</option></select>
+        </div>
+        <div style="flex:1;min-width:90px;"><label>Valor (R$)</label><input type="number" id="e2-valor" min="0" step="0.01" placeholder="0,00" /></div>
+        <div style="flex:1;min-width:90px;"><label>Resultado</label>
+          <select id="e2-res"><option value="win">Win</option><option value="loss">Loss</option></select>
+        </div>
+      </div>
+    </div>
+    <button class="btn" style="width:100%;margin-bottom:10px;font-size:12px;border-style:dashed;display:none;" id="btn-add-soros2" onclick="toggleSoros2()">
+      <i class="ti ti-plus" aria-hidden="true"></i> Adicionar entrada 2 (Soros)
+    </button>
+    <div class="sep"></div>
+    <div style="margin-bottom:10px;">
+      <label>Lucro / Prejuízo da sessão (R$) <span style="font-size:11px;color:var(--color-text-tertiary);">use - para prejuízo</span></label>
+      <input type="number" id="inp-lucro" step="0.01" placeholder="Ex: 25,00 ou -10,00" />
+    </div>
+    <div style="margin-bottom:1rem;">
+      <label>Observação (opcional)</label>
+      <textarea id="inp-obs" placeholder="Anotações sobre a operação, setup usado, condição do mercado..."></textarea>
+    </div>
+    <div style="display:flex;justify-content:flex-end;">
+      <button class="btn btn-primary" onclick="salvarSessao()">
+        <i class="ti ti-device-floppy" aria-hidden="true"></i> Salvar sessão
+      </button>
+    </div>
+    <div id="msg-form" style="display:none;text-align:center;margin-top:10px;font-size:13px;"></div>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<div id="sec-dashboard" class="section">
+  <div class="grid-5" id="dash-metrics"></div>
+  <div class="grid-2">
+    <div class="card"><h3>Meta vs Stop</h3><div class="chart-wrap"><canvas id="chart-ms" role="img" aria-label="Meta vs Stop">Sem dados.</canvas></div></div>
+    <div class="card"><h3>Lucro acumulado</h3><div class="chart-wrap"><canvas id="chart-lucro" role="img" aria-label="Lucro acumulado">Sem dados.</canvas></div></div>
+  </div>
+  <div class="card">
+    <h3>Assertividade das entradas (win / total operações)</h3>
+    <div id="assert-detail"></div>
+  </div>
+  <div class="grid-2">
+    <div class="card"><h3>Meio dia</h3><div id="stat-meio" class="empty-state">Sem dados</div></div>
+    <div class="card"><h3>Noite</h3><div id="stat-noite" class="empty-state">Sem dados</div></div>
+  </div>
+  <div class="card"><h3>Disciplina</h3><div class="chart-wrap" style="height:160px;"><canvas id="chart-disc" role="img" aria-label="Disciplina">Sem dados.</canvas></div></div>
+</div>
+
+<!-- HISTÓRICO -->
+<div id="sec-historico" class="section">
+  <div style="display:flex;gap:8px;margin-bottom:1rem;align-items:center;flex-wrap:wrap;">
+    <select id="filtro-periodo" onchange="renderHistorico()" style="width:140px;font-size:13px;">
+      <option value="">Todos períodos</option><option value="meio_dia">Meio dia</option><option value="noite">Noite</option>
+    </select>
+    <select id="filtro-resultado" onchange="renderHistorico()" style="width:130px;font-size:13px;">
+      <option value="">Meta e Stop</option><option value="meta">Só Meta</option><option value="stop">Só Stop</option>
+    </select>
+    <span id="hist-count" style="font-size:12px;color:var(--color-text-secondary);margin-left:auto;"></span>
+    <button class="btn-red" onclick="zerarTudo()"><i class="ti ti-trash" aria-hidden="true"></i> Zerar tudo</button>
+  </div>
+  <div class="card" style="overflow-x:auto;"><div id="tabela-historico"></div></div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script>
+let sessoes = [];
+let chartMS=null, chartLucro=null, chartDisc=null;
+let soros2Ativo = true;
+
+/* ── storage ── */
+async function salvarStorage() {
+  try { await window.storage.set('sessoes', JSON.stringify(sessoes)); } catch(e) {}
+}
+async function carregarStorage() {
+  try {
+    const r = await window.storage.get('sessoes');
+    sessoes = r ? JSON.parse(r.value) : [];
+  } catch(e) { sessoes = []; }
+  atualizarContador();
+}
+
+/* ── tabs ── */
+function switchTab(id) {
+  ['registrar','dashboard','historico'].forEach((n,i) => {
+    document.querySelectorAll('.tab')[i].classList.toggle('active', n===id);
+    document.getElementById('sec-'+n).classList.toggle('active', n===id);
+  });
+  if (id==='dashboard') renderDashboard();
+  if (id==='historico') renderHistorico();
+}
+
+function toggleSoros2() {
+  soros2Ativo = !soros2Ativo;
+  document.getElementById('soros-2-box').style.display = soros2Ativo ? 'block' : 'none';
+  document.getElementById('btn-add-soros2').style.display = soros2Ativo ? 'none' : 'block';
+}
+
+const fmtM = v => { const n=parseFloat(v)||0; return (n<0?'-':'')+'R$ '+Math.abs(n).toFixed(2).replace('.',','); };
+const fmtD = d => { if(!d) return ''; const p=d.split('-'); return p[2]+'/'+p[1]+'/'+p[0]; };
+
+/* ── salvar sessão ── */
+async function salvarSessao() {
+  const data = document.getElementById('inp-data').value;
+  if (!data) { mostrarMsg('Informe a data.', false); return; }
+  const lucroRaw = document.getElementById('inp-lucro').value;
+  if (lucroRaw===''||lucroRaw===null) { mostrarMsg('Informe o lucro ou prejuízo.', false); return; }
+  const s = {
+    id: Date.now(), data,
+    periodo: document.getElementById('inp-periodo').value,
+    resultado: document.getElementById('inp-resultado').value,
+    disciplina: document.getElementById('inp-disciplina').value,
+    lucro: parseFloat(lucroRaw)||0,
+    obs: document.getElementById('inp-obs').value.trim(),
+    e1_setup: document.getElementById('e1-setup').value,
+    e1_valor: parseFloat(document.getElementById('e1-valor').value)||0,
+    e1_res: document.getElementById('e1-res').value,
+    e2_ativo: soros2Ativo,
+    e2_setup: soros2Ativo ? document.getElementById('e2-setup').value : null,
+    e2_valor: soros2Ativo ? (parseFloat(document.getElementById('e2-valor').value)||0) : null,
+    e2_res: soros2Ativo ? document.getElementById('e2-res').value : null,
+  };
+  sessoes.unshift(s);
+  await salvarStorage();
+  atualizarContador();
+  mostrarMsg('Sessão salva com sucesso!', true);
+  ['inp-lucro','inp-obs','e1-valor','e2-valor'].forEach(id=>document.getElementById(id).value='');
+  ['e1-res','e2-res'].forEach(id=>document.getElementById(id).value='win');
+  ['e1-setup','e2-setup'].forEach(id=>document.getElementById(id).value='op1');
+  document.getElementById('inp-resultado').value='meta';
+  document.getElementById('inp-disciplina').value='ok';
+}
+
+function mostrarMsg(txt, ok) {
+  const el = document.getElementById('msg-form');
+  el.textContent = txt;
+  el.style.color = ok ? '#3b6d11' : '#a32d2d';
+  el.style.display = 'block';
+  setTimeout(()=>el.style.display='none', 2500);
+}
+
+function atualizarContador() {
+  document.getElementById('total-sessoes').textContent = sessoes.length + ' sessã' + (sessoes.length===1?'o':'ões');
+}
+
+/* ── deletar sessão individual ── */
+async function deletarSessao(id) {
+  sessoes = sessoes.filter(s => s.id !== id);
+  await salvarStorage();
+  atualizarContador();
+  renderHistorico();
+}
+
+/* ── zerar tudo ── */
+async function zerarTudo() {
+  if (!confirm('Tem certeza que quer apagar TODAS as sessões? Essa ação não pode ser desfeita.')) return;
+  sessoes = [];
+  await salvarStorage();
+  atualizarContador();
+  renderHistorico();
+}
+
+/* ── assertividade ── */
+function calcAssert(arr) {
+  let totalOps=0,wins=0,op1t=0,op1w=0,op2t=0,op2w=0;
+  arr.forEach(s=>{
+    totalOps++; if(s.e1_res==='win') wins++;
+    if(s.e1_setup==='op1'){op1t++;if(s.e1_res==='win')op1w++;}else{op2t++;if(s.e1_res==='win')op2w++;}
+    if(s.e2_ativo&&s.e2_valor){
+      totalOps++;if(s.e2_res==='win')wins++;
+      if(s.e2_setup==='op1'){op1t++;if(s.e2_res==='win')op1w++;}else{op2t++;if(s.e2_res==='win')op2w++;}
+    }
+  });
+  return {totalOps,wins,op1t,op1w,op2t,op2w,
+    pct:totalOps>0?((wins/totalOps)*100).toFixed(1):'0.0',
+    op1pct:op1t>0?((op1w/op1t)*100).toFixed(1):'0.0',
+    op2pct:op2t>0?((op2w/op2t)*100).toFixed(1):'0.0'};
+}
+
+function pctBar(pct, color) {
+  const v=parseFloat(pct)||0;
+  return `<div style="display:flex;align-items:center;gap:8px;margin-top:4px;">
+    <div style="flex:1;height:6px;background:var(--color-border-tertiary);border-radius:3px;overflow:hidden;">
+      <div style="width:${v}%;height:100%;background:${color};border-radius:3px;"></div>
+    </div>
+    <span style="font-size:12px;font-weight:500;color:var(--color-text-primary);min-width:38px;">${pct}%</span>
+  </div>`;
+}
+
+/* ── dashboard ── */
+function renderDashboard() {
+  const total=sessoes.length;
+  const metas=sessoes.filter(s=>s.resultado==='meta').length;
+  const lucroTotal=sessoes.reduce((a,s)=>a+s.lucro,0);
+  const discOk=sessoes.filter(s=>s.disciplina==='ok').length;
+  const ga=calcAssert(sessoes);
+  const isDark=matchMedia('(prefers-color-scheme: dark)').matches;
+  const col=isDark?{green:'#9FE1CB',red:'#F7C1C1',blue:'#85B7EB',amber:'#FAC775',teal:'#5DCAA5'}
+                  :{green:'#639922',red:'#E24B4A',blue:'#185FA5',amber:'#BA7517',teal:'#1D9E75'};
+  const textCol=isDark?'rgba(255,255,255,0.6)':'rgba(0,0,0,0.5)';
+
+  document.getElementById('dash-metrics').innerHTML=`
+    <div class="metric"><div class="metric-label">Total sessões</div><div class="metric-val">${total}</div></div>
+    <div class="metric"><div class="metric-label">Taxa de meta</div><div class="metric-val">${total>0?((metas/total)*100).toFixed(1):0}%</div></div>
+    <div class="metric"><div class="metric-label">Assertividade entradas</div><div class="metric-val">${ga.pct}%</div></div>
+    <div class="metric"><div class="metric-label">Lucro total</div><div class="metric-val ${lucroTotal>=0?'pos':'neg'}">${fmtM(lucroTotal)}</div></div>
+    <div class="metric"><div class="metric-label">Disciplina</div><div class="metric-val">${total>0?((discOk/total)*100).toFixed(0):0}%</div></div>
+  `;
+
+  const md=sessoes.filter(s=>s.periodo==='meio_dia'), nt=sessoes.filter(s=>s.periodo==='noite');
+  const amd=calcAssert(md), an=calcAssert(nt);
+  document.getElementById('assert-detail').innerHTML=`
+    <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;">
+      ${['Geral:'+ga.wins+'/'+ga.totalOps,'Meio dia:'+amd.wins+'/'+amd.totalOps,'Noite:'+an.wins+'/'+an.totalOps]
+        .map((t,i)=>{const a=[ga,amd,an][i]; return `<div>
+          <div style="font-size:11px;color:var(--color-text-secondary);margin-bottom:6px;font-weight:500;">${t} ops</div>
+          ${pctBar(a.pct,col.teal)}
+          <div style="margin-top:8px;font-size:11px;color:var(--color-text-secondary);">OP-01 Tendência</div>
+          ${pctBar(a.op1pct,col.blue)}
+          <div style="margin-top:6px;font-size:11px;color:var(--color-text-secondary);">OP-02 Lateral</div>
+          ${pctBar(a.op2pct,col.amber)}
+        </div>`;}).join('')}
+    </div>`;
+
+  function periodoStats(arr,el){
+    if(!arr.length){document.getElementById(el).innerHTML='<div class="empty-state">Sem dados</div>';return;}
+    const m=arr.filter(s=>s.resultado==='meta').length, lucro=arr.reduce((a,s)=>a+s.lucro,0), pa=calcAssert(arr);
+    document.getElementById(el).innerHTML=`
+      <div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;">
+        <div class="metric"><div class="metric-label">Sessões</div><div class="metric-val" style="font-size:18px;">${arr.length}</div></div>
+        <div class="metric"><div class="metric-label">Taxa meta</div><div class="metric-val" style="font-size:18px;">${((m/arr.length)*100).toFixed(0)}%</div></div>
+        <div class="metric"><div class="metric-label">Assertividade</div><div class="metric-val" style="font-size:18px;">${pa.pct}%</div></div>
+        <div class="metric"><div class="metric-label">Lucro</div><div class="metric-val ${lucro>=0?'pos':'neg'}" style="font-size:18px;">${fmtM(lucro)}</div></div>
+      </div>`;}
+  periodoStats(md,'stat-meio'); periodoStats(nt,'stat-noite');
+
+  if(chartMS)chartMS.destroy();
+  chartMS=new Chart(document.getElementById('chart-ms'),{type:'doughnut',
+    data:{labels:['Meta','Stop'],datasets:[{data:[metas,total-metas],backgroundColor:[col.green,col.red],borderWidth:0}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{display:false}}}});
+
+  if(chartDisc)chartDisc.destroy();
+  chartDisc=new Chart(document.getElementById('chart-disc'),{type:'doughnut',
+    data:{labels:['Fiz tudo certo','Cometi erro'],datasets:[{data:[discOk,total-discOk],backgroundColor:[col.blue,col.amber],borderWidth:0}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{display:false}}}});
+
+  const sorted=[...sessoes].sort((a,b)=>a.data>b.data?1:-1);
+  let acc=0;
+  if(chartLucro)chartLucro.destroy();
+  chartLucro=new Chart(document.getElementById('chart-lucro'),{type:'line',
+    data:{labels:sorted.map(s=>fmtD(s.data)),
+      datasets:[{label:'Lucro acumulado',data:sorted.map(s=>{acc+=s.lucro;return parseFloat(acc.toFixed(2));}),
+        borderColor:col.blue,backgroundColor:isDark?'rgba(133,183,235,0.15)':'rgba(24,95,165,0.08)',fill:true,tension:0.3,pointRadius:3}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{ticks:{color:textCol,font:{size:10},maxRotation:45,autoSkip:true},grid:{display:false}},
+              y:{ticks:{color:textCol,font:{size:10},callback:v=>'R$'+v},grid:{color:isDark?'rgba(255,255,255,0.05)':'rgba(0,0,0,0.05)'}}}}});
+}
+
+/* ── histórico ── */
+function renderHistorico() {
+  const fp=document.getElementById('filtro-periodo').value;
+  const fr=document.getElementById('filtro-resultado').value;
+  let lista=sessoes;
+  if(fp) lista=lista.filter(s=>s.periodo===fp);
+  if(fr) lista=lista.filter(s=>s.resultado===fr);
+  document.getElementById('hist-count').textContent=lista.length+' registro(s)';
+  if(!lista.length){
+    document.getElementById('tabela-historico').innerHTML='<div class="empty-state"><i class="ti ti-mood-empty" aria-hidden="true" style="font-size:24px;"></i><br>Nenhuma sessão encontrada</div>';
+    return;
+  }
+  const sb=v=>v==='op1'?'<span class="badge badge-op1" style="font-size:9px;">OP-01</span>':'<span class="badge badge-op2" style="font-size:9px;">OP-02</span>';
+  let html=`<table><thead><tr><th>Data</th><th>Período</th><th>E1</th><th>E2</th><th>Sessão</th><th>Lucro</th><th>Disciplina</th><th>Obs</th><th></th></tr></thead><tbody>`;
+  lista.forEach(s=>{
+    const per=s.periodo==='meio_dia'?'<span class="badge badge-meio">Meio dia</span>':'<span class="badge badge-noite">Noite</span>';
+    const res=s.resultado==='meta'?'<span class="badge badge-meta">Meta</span>':'<span class="badge badge-stop">Stop</span>';
+    const disc=s.disciplina==='ok'?'<span class="badge badge-ok">Correto</span>':'<span class="badge badge-err">Erro</span>';
+    const e1=s.e1_valor>0?`<span style="font-size:11px;">${sb(s.e1_setup)} R$${s.e1_valor.toFixed(2)} <span class="badge ${s.e1_res==='win'?'badge-win':'badge-loss'}" style="font-size:10px;">${s.e1_res}</span></span>`:'<span style="color:var(--color-text-tertiary);font-size:11px;">—</span>';
+    const e2=s.e2_ativo&&s.e2_valor?`<span style="font-size:11px;">${sb(s.e2_setup)} R$${s.e2_valor.toFixed(2)} <span class="badge ${s.e2_res==='win'?'badge-win':'badge-loss'}" style="font-size:10px;">${s.e2_res}</span></span>`:'<span style="color:var(--color-text-tertiary);font-size:11px;">—</span>';
+    const obs=s.obs?`<span style="cursor:help;color:var(--color-text-secondary);" onclick="alert('${s.obs.replace(/'/g,"\\'")}')"><i class="ti ti-notes" aria-hidden="true"></i></span>`:'<span style="color:var(--color-text-tertiary);">—</span>';
+    html+=`<tr>
+      <td style="white-space:nowrap;">${fmtD(s.data)}</td><td>${per}</td><td>${e1}</td><td>${e2}</td><td>${res}</td>
+      <td class="${s.lucro>=0?'pos':'neg'}" style="font-weight:500;">${fmtM(s.lucro)}</td>
+      <td>${disc}</td><td style="text-align:center;">${obs}</td>
+      <td><button class="btn-danger-sm" onclick="deletarSessao(${s.id})"><i class="ti ti-trash" aria-hidden="true"></i></button></td>
+    </tr>`;
+  });
+  html+='</tbody></table>';
+  document.getElementById('tabela-historico').innerHTML=html;
+}
+
+/* ── init ── */
+const today=new Date();
+document.getElementById('inp-data').value=`${today.getFullYear()}-${String(today.getMonth()+1).padStart(2,'0')}-${String(today.getDate()).padStart(2,'0')}`;
+carregarStorage();
+</script>
