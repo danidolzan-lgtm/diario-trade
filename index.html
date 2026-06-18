@@ -265,11 +265,11 @@ function renderDashboard() {
     if(!arr.length){document.getElementById(elId).innerHTML='<div class="empty-state">Sem dados</div>';return;}
     const m=arr.filter(s=>s.resultado==='meta').length,lucro=arr.reduce((a,s)=>a+s.lucro,0),pa=calcAssert(arr);
     document.getElementById(elId).innerHTML=`
-      <div class="grid-4s">
+      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;width:100%;">
         <div class="metric"><div class="metric-label">Sessões</div><div class="metric-val">${arr.length}</div></div>
         <div class="metric"><div class="metric-label">Taxa meta</div><div class="metric-val" style="color:var(--green-text);">${((m/arr.length)*100).toFixed(0)}%</div></div>
         <div class="metric"><div class="metric-label">Assertividade</div><div class="metric-val" style="color:var(--blue);">${pa.pct}%</div></div>
-        <div class="metric"><div class="metric-label">Lucro</div><div class="metric-val ${lucro>=0?'pos':'neg'}">${fmtM(lucro)}</div></div>
+        <div class="metric" style="grid-column:span 3;"><div class="metric-label">Lucro</div><div class="metric-val ${lucro>=0?'pos':'neg'}" style="font-size:22px;">${fmtM(lucro)}</div></div>
       </div>`;}
   periodoCard(md,'stat-meio'); periodoCard(nt,'stat-noite');
 
@@ -448,7 +448,7 @@ select option{background:var(--bg2);}
 .grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-bottom:14px;}
 .grid-4s{
   display:grid;
-  grid-template-columns:repeat(4,1fr);
+  grid-template-columns:repeat(2,1fr);
   gap:8px;
   width:100%;
   min-width:0;
