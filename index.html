@@ -1,18 +1,19 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-<meta charset="UTF-8" />
+<meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Diário de Trade</title>
 
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+
 <style>
 :root{
-  --bg1:#070b14;
-  --bg2:#0f172a;
-  --card:rgba(17,26,46,0.75);
-  --border:rgba(255,255,255,0.06);
+  --bg:#0b1220;
+  --card:#111a2e;
+  --border:rgba(255,255,255,0.08);
   --text:#e5e7eb;
-  --muted:rgba(229,231,235,0.6);
+  --muted:#94a3b8;
   --green:#22c55e;
   --red:#ef4444;
   --blue:#60a5fa;
@@ -23,15 +24,15 @@
 
 body{
   font-family:Arial;
-  background:radial-gradient(circle at top,var(--bg2),var(--bg1));
+  background:var(--bg);
   color:var(--text);
   padding:20px;
 }
 
 /* TABS */
-.tabs{display:flex;gap:6px;border-bottom:1px solid var(--border);margin:20px 0;}
+.tabs{display:flex;gap:6px;border-bottom:1px solid var(--border);margin:15px 0;}
 .tab{
-  padding:10px 16px;
+  padding:10px 14px;
   background:none;
   border:none;
   color:var(--muted);
@@ -39,84 +40,84 @@ body{
   border-bottom:2px solid transparent;
 }
 .tab.active{color:white;border-bottom:2px solid var(--blue);}
-.tab:hover{color:white;}
 
-/* SECTIONS */
 .section{display:none;}
 .section.active{display:block;}
 
-/* CARDS */
+/* CARD */
 .card{
   background:var(--card);
   border:1px solid var(--border);
   border-radius:var(--radius);
-  padding:15px;
-  margin-bottom:15px;
+  padding:14px;
+  margin-bottom:12px;
 }
 
-/* INPUTS */
-input,select,textarea{
+/* INPUT */
+input,select{
   width:100%;
   padding:10px;
+  margin-top:5px;
+  margin-bottom:10px;
   border-radius:10px;
   border:1px solid var(--border);
-  background:rgba(255,255,255,0.03);
+  background:#0f172a;
   color:white;
 }
 
-/* BUTTONS */
+/* BUTTON */
 button{
+  padding:10px 14px;
+  border-radius:10px;
+  border:none;
   cursor:pointer;
 }
 
 .btn{
-  padding:10px 14px;
-  border-radius:10px;
-  border:1px solid var(--border);
-  background:rgba(255,255,255,0.03);
+  background:#1f2937;
   color:white;
 }
 
 .btn-primary{
   background:linear-gradient(135deg,var(--green),#16a34a);
-  border:none;
 }
 
-.btn-red{
-  border:1px solid var(--red);
-  color:var(--red);
-}
+/* GRID */
+.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
 
 /* TABLE */
 table{width:100%;border-collapse:collapse;font-size:12px;}
 th,td{padding:8px;border-bottom:1px solid var(--border);}
 
-/* METRICS */
+/* METRIC */
 .metric{
-  background:rgba(255,255,255,0.03);
+  background:#0f172a;
   padding:12px;
   border-radius:10px;
 }
 
-/* HIDDEN */
-.hidden{display:none;}
+/* COLORS */
+.pos{color:var(--green);}
+.neg{color:var(--red);}
+
+canvas{height:220px !important;}
 </style>
 </head>
 
 <body>
 
-<h2>📊 Diário de Trade</h2>
+<h2>📊 Diário de Trade PRO</h2>
 
 <div class="tabs">
-  <button class="tab active" onclick="switchTab('registrar')">Registrar</button>
-  <button class="tab" onclick="switchTab('dashboard')">Dashboard</button>
-  <button class="tab" onclick="switchTab('historico')">Histórico</button>
+  <button class="tab active" onclick="switchTab('reg')">Registrar</button>
+  <button class="tab" onclick="switchTab('dash')">Dashboard</button>
+  <button class="tab" onclick="switchTab('hist')">Histórico</button>
 </div>
 
-<!-- REGISTRAR -->
-<div id="registrar" class="section active">
+<!-- REG -->
+<div id="reg" class="section active">
   <div class="card">
-    <h3>Nova Sessão</h3>
+    <h3>Nova sessão</h3>
 
     <label>Data</label>
     <input type="date" id="data">
@@ -130,96 +131,124 @@ th,td{padding:8px;border-bottom:1px solid var(--border);}
       <option value="stop">Stop</option>
     </select>
 
-    <br><br>
+    <label>Disciplina</label>
+    <select id="disc">
+      <option value="ok">Ok</option>
+      <option value="erro">Erro</option>
+    </select>
 
-    <button class="btn btn-primary" onclick="salvar()">Salvar</button>
+    <button class="btn-primary" onclick="save()">Salvar</button>
   </div>
 </div>
 
-<!-- DASHBOARD -->
-<div id="dashboard" class="section">
-  <div class="card">
-    <h3>Total de sessões</h3>
-    <div id="total">0</div>
+<!-- DASH -->
+<div id="dash" class="section">
+  <div class="grid">
+    <div class="metric">Total: <span id="total">0</span></div>
+    <div class="metric">Lucro: <span id="profit">0</span></div>
+    <div class="metric">Meta %: <span id="meta">0</span></div>
+    <div class="metric">Disciplina: <span id="disciplina">0</span></div>
   </div>
 
   <div class="card">
-    <h3>Lucro total</h3>
-    <div id="lucroTotal">R$ 0</div>
+    <canvas id="chart"></canvas>
   </div>
 </div>
 
-<!-- HISTÓRICO -->
-<div id="historico" class="section">
+<!-- HIST -->
+<div id="hist" class="section">
   <div class="card">
-    <h3>Histórico</h3>
     <table>
       <thead>
         <tr>
           <th>Data</th>
           <th>Lucro</th>
           <th>Resultado</th>
+          <th>Disciplina</th>
         </tr>
       </thead>
-      <tbody id="lista"></tbody>
+      <tbody id="list"></tbody>
     </table>
   </div>
 </div>
 
 <script>
 let sessoes = [];
+let chart;
 
 /* TAB */
-function switchTab(tab){
+function switchTab(t){
   document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
-  document.getElementById(tab).classList.add('active');
+  document.getElementById(t).classList.add('active');
 
-  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
   event.target.classList.add('active');
 
-  if(tab==='dashboard') renderDash();
-  if(tab==='historico') renderHist();
+  if(t==='dash') renderDash();
+  if(t==='hist') renderHist();
 }
 
-/* SALVAR */
-function salvar(){
+/* SAVE */
+function save(){
   const s = {
-    data: document.getElementById('data').value,
-    lucro: parseFloat(document.getElementById('lucro').value)||0,
-    resultado: document.getElementById('resultado').value
+    data: data.value,
+    lucro: parseFloat(lucro.value)||0,
+    resultado: resultado.value,
+    disc: disc.value
   };
 
   sessoes.unshift(s);
-  localStorage.setItem('sessoes', JSON.stringify(sessoes));
+  localStorage.setItem("trade", JSON.stringify(sessoes));
 
-  alert("Salvo!");
   renderDash();
 }
 
 /* DASH */
 function renderDash(){
-  document.getElementById('total').innerText = sessoes.length;
+  const total = sessoes.length;
+  const lucroTotal = sessoes.reduce((a,b)=>a+b.lucro,0);
+  const meta = sessoes.filter(s=>s.resultado==='meta').length;
+  const disc = sessoes.filter(s=>s.disc==='ok').length;
 
-  const lucro = sessoes.reduce((a,b)=>a+b.lucro,0);
-  document.getElementById('lucroTotal').innerText = "R$ " + lucro.toFixed(2);
+  totalEl.innerText = total;
+  profit.innerText = "R$ "+lucroTotal.toFixed(2);
+  metaEl.innerText = total?((meta/total)*100).toFixed(1):0;
+  disciplina.innerText = total?((disc/total)*100).toFixed(1):0;
+
+  const labels = sessoes.map(s=>s.data);
+  const dataChart = sessoes.map(s=>s.lucro);
+
+  if(chart) chart.destroy();
+
+  chart = new Chart(document.getElementById('chart'),{
+    type:'line',
+    data:{
+      labels,
+      datasets:[{
+        label:'Lucro',
+        data:dataChart,
+        borderColor:'#60a5fa',
+        fill:true
+      }]
+    }
+  });
 }
 
 /* HIST */
 function renderHist(){
-  let html = "";
-  sessoes.forEach(s=>{
-    html += `<tr>
+  list.innerHTML = sessoes.map(s=>`
+    <tr>
       <td>${s.data}</td>
-      <td>${s.lucro}</td>
+      <td class="${s.lucro>=0?'pos':'neg'}">${s.lucro}</td>
       <td>${s.resultado}</td>
-    </tr>`;
-  });
-  document.getElementById('lista').innerHTML = html;
+      <td>${s.disc}</td>
+    </tr>
+  `).join('');
 }
 
 /* INIT */
-window.onload = ()=>{
-  sessoes = JSON.parse(localStorage.getItem('sessoes')) || [];
+window.onload=()=>{
+  sessoes = JSON.parse(localStorage.getItem("trade"))||[];
   renderDash();
 };
 </script>
