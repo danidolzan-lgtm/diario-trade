@@ -5,498 +5,158 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Diário de Trade — Danrlei Dolzan</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
-<style>
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-:root {
-  --bg: #0d1117;
-  --bg2: #161b22;
-  --bg3: #1c2230;
-  --border: rgba(255,255,255,0.08);
-  --text: #e6edf3;
-  --muted: #8b949e;
-  --green: #3fb950;
-  --green-bg: rgba(63,185,80,0.12);
-  --green-text: #7ee787;
-  --red: #f85149;
-  --red-bg: rgba(248,81,73,0.12);
-  --red-text: #ff7b72;
-  --blue: #58a6ff;
-  --blue-bg: rgba(88,166,255,0.12);
-  --purple: #bc8cff;
-  --purple-bg: rgba(188,140,255,0.12);
-  --amber: #d29922;
-  --amber-bg: rgba(210,153,34,0.12);
-  --amber-text: #e3b341;
-  --teal: #39d353;
-  --radius: 10px;
-  --radius-sm: 6px;
-}
+<!-- ═══════════════════════════════════════════════════════
+     FIREBASE — cole aqui as suas chaves do projeto
+     Veja o passo a passo no final deste arquivo
+════════════════════════════════════════════════════════ -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, query, where, orderBy }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
-body {
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  min-height: 100vh;
-  font-size: 14px;
-  line-height: 1.5;
-}
+/* ─────────────────────────────────────────
+   🔑 SUBSTITUA PELOS SEUS DADOS DO FIREBASE
+   (Firebase Console → Configurações do projeto → Seus apps → SDK)
+───────────────────────────────────────── */
+const firebaseConfig = {
+  apiKey:            "AIzaSyDkKfcH9xphk0ZGYOQci61KJdRTr3OP72k",
+  authDomain:        "diariotradedanrlei.firebaseapp.com",
+  projectId:         "diariotradedanrlei",
+  storageBucket:     "diariotradedanrlei.firebasestorage.app",
+  messagingSenderId: "833829996723",
+  appId:             "1:833829996723:web:79b117ec17271acf7108c6"
+};
 
-/* ── layout ── */
-.app { max-width: 960px; margin: 0 auto; padding: 0 16px 60px; }
+const app  = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db   = getFirestore(app);
 
-header {
-  padding: 24px 0 0;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  margin-bottom: 24px;
-}
-header h1 { font-size: 20px; font-weight: 600; display: flex; align-items: center; gap: 8px; }
-header h1 span { font-size: 22px; }
-#total-sessoes { font-size: 12px; color: var(--muted); }
-
-/* ── tabs ── */
-.tabs {
-  display: flex;
-  gap: 2px;
-  border-bottom: 1px solid var(--border);
-  margin-bottom: 24px;
-}
-.tab {
-  background: none;
-  border: none;
-  color: var(--muted);
-  cursor: pointer;
-  padding: 10px 18px;
-  font-size: 14px;
-  border-bottom: 2px solid transparent;
-  margin-bottom: -1px;
-  transition: all 0.15s;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.tab:hover { color: var(--text); }
-.tab.active { color: var(--text); border-bottom-color: var(--blue); font-weight: 500; }
-
-/* ── section ── */
-.section { display: none; }
-.section.active { display: block; }
-
-/* ── card ── */
-.card {
-  background: var(--bg2);
-  border: 1px solid var(--border);
-  border-radius: var(--radius);
-  padding: 18px 20px;
-  margin-bottom: 14px;
-}
-
-/* ── form ── */
-.form-row { display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 12px; }
-.field { flex: 1; min-width: 120px; display: flex; flex-direction: column; gap: 5px; }
-.field label { font-size: 12px; color: var(--muted); font-weight: 500; }
-input[type="text"],
-input[type="number"],
-input[type="date"],
-select,
-textarea {
-  background: var(--bg3);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  color: var(--text);
-  padding: 8px 10px;
-  font-size: 13px;
-  width: 100%;
-  transition: border-color 0.15s;
-  font-family: inherit;
-}
-input:focus, select:focus, textarea:focus {
-  outline: none;
-  border-color: var(--blue);
-}
-textarea { resize: vertical; min-height: 64px; }
-select option { background: var(--bg2); }
-
-.sep { height: 1px; background: var(--border); margin: 16px 0; }
-
-/* ── soros box ── */
-.soros-box {
-  background: var(--bg3);
-  border: 1px solid var(--border);
-  border-radius: var(--radius-sm);
-  padding: 12px 14px;
-  margin-bottom: 10px;
-}
-.soros-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 10px;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-}
-
-/* ── buttons ── */
-.btn {
-  border: none;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-  font-size: 13px;
-  font-weight: 500;
-  padding: 9px 18px;
-  transition: all 0.15s;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-family: inherit;
-}
-.btn-primary { background: var(--blue); color: #0d1117; }
-.btn-primary:hover { background: #79bcff; }
-.btn-ghost {
-  background: transparent;
-  border: 1px solid var(--border);
-  color: var(--muted);
-}
-.btn-ghost:hover { border-color: var(--text); color: var(--text); }
-.btn-ghost-dash {
-  background: transparent;
-  border: 1px dashed var(--border);
-  color: var(--muted);
-  width: 100%;
-  margin-bottom: 10px;
-  justify-content: center;
-}
-.btn-ghost-dash:hover { border-color: var(--blue); color: var(--blue); }
-.btn-danger {
-  background: transparent;
-  border: 1px solid var(--border);
-  color: var(--red-text);
-  font-size: 11px;
-  padding: 3px 8px;
-  border-radius: var(--radius-sm);
-  cursor: pointer;
-}
-.btn-danger:hover { background: var(--red-bg); border-color: var(--red); }
-.btn-danger-outline {
-  background: transparent;
-  border: 1px solid var(--red);
-  color: var(--red-text);
-  padding: 7px 14px;
-  border-radius: var(--radius-sm);
-  font-size: 13px;
-  font-weight: 500;
-  cursor: pointer;
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-family: inherit;
-}
-.btn-danger-outline:hover { background: var(--red-bg); }
-
-/* ── badges ── */
-.badge {
-  display: inline-block;
-  padding: 2px 8px;
-  border-radius: 20px;
-  font-size: 11px;
-  font-weight: 500;
-  white-space: nowrap;
-}
-.badge-win   { background: var(--green-bg); color: var(--green-text); border: 1px solid rgba(63,185,80,0.25); }
-.badge-loss  { background: var(--red-bg);   color: var(--red-text);   border: 1px solid rgba(248,81,73,0.25); }
-.badge-meta  { background: var(--green-bg); color: var(--green-text); border: 1px solid rgba(63,185,80,0.25); }
-.badge-stop  { background: var(--red-bg);   color: var(--red-text);   border: 1px solid rgba(248,81,73,0.25); }
-.badge-ok    { background: var(--blue-bg);  color: var(--blue);       border: 1px solid rgba(88,166,255,0.25); }
-.badge-err   { background: var(--amber-bg); color: var(--amber-text); border: 1px solid rgba(210,153,34,0.25); }
-.badge-meio  { background: var(--purple-bg);color: var(--purple);     border: 1px solid rgba(188,140,255,0.25); }
-.badge-noite { background: rgba(30,20,60,0.8); color: #a78bfa;        border: 1px solid rgba(167,139,250,0.25); }
-.badge-op1   { background: rgba(20,60,40,0.6); color: #6ee7b7;        border: 1px solid rgba(110,231,183,0.2); font-size: 10px; }
-.badge-op2   { background: rgba(60,40,10,0.6); color: #fcd34d;        border: 1px solid rgba(252,211,77,0.2); font-size: 10px; }
-
-/* ── metrics grid ── */
-.grid-5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 10px; margin-bottom: 14px; }
-.grid-2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px; margin-bottom: 14px; }
-.grid-4s { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
-
-.metric {
-  background: var(--bg3);
-  border-radius: var(--radius-sm);
-  padding: 14px;
-  border: 1px solid var(--border);
-}
-.metric-label { font-size: 11px; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.04em; }
-.metric-val { font-size: 24px; font-weight: 600; }
-
-/* ── pct bar ── */
-.pct-bar-wrap { display: flex; align-items: center; gap: 8px; margin-top: 5px; }
-.pct-bar-track { flex: 1; height: 5px; background: rgba(255,255,255,0.08); border-radius: 3px; overflow: hidden; }
-.pct-bar-fill { height: 100%; border-radius: 3px; transition: width 0.4s ease; }
-.pct-bar-label { font-size: 12px; font-weight: 600; min-width: 40px; text-align: right; }
-
-/* ── table ── */
-table { width: 100%; border-collapse: collapse; font-size: 12px; }
-th {
-  text-align: left;
-  font-size: 11px;
-  font-weight: 500;
-  color: var(--muted);
-  padding: 6px 8px;
-  border-bottom: 1px solid var(--border);
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
-  white-space: nowrap;
-}
-td {
-  padding: 8px 8px;
-  border-bottom: 1px solid var(--border);
-  vertical-align: middle;
-}
-tr:last-child td { border-bottom: none; }
-tr:hover td { background: rgba(255,255,255,0.02); }
-
-/* ── pos / neg ── */
-.pos { color: var(--green-text); }
-.neg { color: var(--red-text); }
-
-/* ── chart ── */
-.chart-wrap { position: relative; width: 100%; height: 220px; }
-
-/* ── empty ── */
-.empty-state { text-align: center; padding: 32px; color: var(--muted); font-size: 13px; }
-
-/* ── section title ── */
-.sec-title {
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--muted);
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  margin-bottom: 12px;
-}
-
-/* ── msg ── */
-#msg-form {
-  display: none;
-  text-align: center;
-  margin-top: 12px;
-  font-size: 13px;
-  padding: 8px;
-  border-radius: var(--radius-sm);
-}
-
-/* ── assert detail ── */
-.assert-col { padding: 4px 0; }
-.assert-row-label { font-size: 11px; color: var(--muted); margin-top: 10px; margin-bottom: 2px; }
-
-/* ── hist filters ── */
-.hist-toolbar {
-  display: flex;
-  gap: 8px;
-  align-items: center;
-  flex-wrap: wrap;
-  margin-bottom: 14px;
-}
-.hist-toolbar select {
-  width: auto;
-  min-width: 140px;
-}
-
-@media (max-width: 640px) {
-  .grid-5 { grid-template-columns: repeat(2, 1fr); }
-  .grid-2 { grid-template-columns: 1fr; }
-  .grid-4s { grid-template-columns: repeat(2, 1fr); }
-}
-</style>
-</head>
-<body>
-
-<div class="app">
-  <header>
-    <h1><span>📊</span> Diário de Trade</h1>
-    <span id="total-sessoes">0 sessões</span>
-  </header>
-
-  <div class="tabs">
-    <button class="tab active" onclick="switchTab('registrar',this)">➕ Registrar</button>
-    <button class="tab" onclick="switchTab('dashboard',this)">📈 Dashboard</button>
-    <button class="tab" onclick="switchTab('historico',this)">📋 Histórico</button>
-  </div>
-
-  <!-- ═══════════════════ REGISTRAR ═══════════════════ -->
-  <div id="sec-registrar" class="section active">
-    <div class="card">
-      <div class="sec-title">Nova sessão</div>
-
-      <div class="form-row">
-        <div class="field"><label>Data</label><input type="date" id="inp-data"></div>
-        <div class="field"><label>Período</label>
-          <select id="inp-periodo">
-            <option value="meio_dia">Meio dia</option>
-            <option value="noite">Noite</option>
-          </select>
-        </div>
-        <div class="field"><label>Sessão</label>
-          <select id="inp-resultado">
-            <option value="meta">Meta</option>
-            <option value="stop">Stop</option>
-          </select>
-        </div>
-        <div class="field"><label>Disciplina</label>
-          <select id="inp-disciplina">
-            <option value="ok">Fiz tudo certo</option>
-            <option value="erro">Cometi erro</option>
-          </select>
-        </div>
-      </div>
-
-      <div class="sep"></div>
-      <div class="sec-title">Entradas — Soros nível 2</div>
-
-      <!-- entrada 1 -->
-      <div class="soros-box">
-        <div class="soros-header"><span>Entrada 1</span></div>
-        <div class="form-row" style="margin-bottom:0;">
-          <div class="field"><label>Setup</label>
-            <select id="e1-setup">
-              <option value="op1">OP-01 — Tendência</option>
-              <option value="op2">OP-02 — Lateral</option>
-            </select>
-          </div>
-          <div class="field"><label>Valor (R$)</label><input type="number" id="e1-valor" min="0" step="0.01" placeholder="0,00"></div>
-          <div class="field"><label>Resultado</label>
-            <select id="e1-res"><option value="win">Win</option><option value="loss">Loss</option></select>
-          </div>
-        </div>
-      </div>
-
-      <!-- entrada 2 -->
-      <div class="soros-box" id="soros-2-box">
-        <div class="soros-header">
-          <span>Entrada 2 (Soros)</span>
-          <button class="btn-danger" onclick="toggleSoros2()">Remover</button>
-        </div>
-        <div class="form-row" style="margin-bottom:0;">
-          <div class="field"><label>Setup</label>
-            <select id="e2-setup">
-              <option value="op1">OP-01 — Tendência</option>
-              <option value="op2">OP-02 — Lateral</option>
-            </select>
-          </div>
-          <div class="field"><label>Valor (R$)</label><input type="number" id="e2-valor" min="0" step="0.01" placeholder="0,00"></div>
-          <div class="field"><label>Resultado</label>
-            <select id="e2-res"><option value="win">Win</option><option value="loss">Loss</option></select>
-          </div>
-        </div>
-      </div>
-
-      <button class="btn btn-ghost-dash" id="btn-add-soros2" onclick="toggleSoros2()" style="display:none;">
-        ➕ Adicionar entrada 2 (Soros)
-      </button>
-
-      <div class="sep"></div>
-
-      <div class="form-row">
-        <div class="field" style="flex:1;">
-          <label>Lucro / Prejuízo da sessão (R$) — use - para prejuízo</label>
-          <input type="number" id="inp-lucro" step="0.01" placeholder="Ex: 25.00 ou -10.00">
-        </div>
-      </div>
-
-      <div class="form-row">
-        <div class="field" style="flex:1;">
-          <label>Observação (opcional)</label>
-          <textarea id="inp-obs" placeholder="Setup, condição do mercado, erros cometidos..."></textarea>
-        </div>
-      </div>
-
-      <div style="display:flex; justify-content:flex-end;">
-        <button class="btn btn-primary" onclick="salvarSessao()">💾 Salvar sessão</button>
-      </div>
-      <div id="msg-form"></div>
-    </div>
-  </div>
-
-  <!-- ═══════════════════ DASHBOARD ═══════════════════ -->
-  <div id="sec-dashboard" class="section">
-
-    <div class="grid-5" id="dash-metrics"></div>
-
-    <div class="grid-2">
-      <div class="card">
-        <div class="sec-title">Meta vs Stop</div>
-        <div class="chart-wrap"><canvas id="chart-ms"></canvas></div>
-      </div>
-      <div class="card">
-        <div class="sec-title">Lucro acumulado</div>
-        <div class="chart-wrap"><canvas id="chart-lucro"></canvas></div>
-      </div>
-    </div>
-
-    <div class="card">
-      <div class="sec-title">Assertividade das entradas (win / total operações)</div>
-      <div id="assert-detail"></div>
-    </div>
-
-    <div class="grid-2">
-      <div class="card"><div class="sec-title">📅 Meio dia</div><div id="stat-meio" class="empty-state">Sem dados</div></div>
-      <div class="card"><div class="sec-title">🌙 Noite</div><div id="stat-noite" class="empty-state">Sem dados</div></div>
-    </div>
-
-    <div class="card">
-      <div class="sec-title">Disciplina</div>
-      <div class="chart-wrap" style="height:160px;"><canvas id="chart-disc"></canvas></div>
-    </div>
-
-  </div>
-
-  <!-- ═══════════════════ HISTÓRICO ═══════════════════ -->
-  <div id="sec-historico" class="section">
-    <div class="hist-toolbar">
-      <select id="filtro-periodo" onchange="renderHistorico()">
-        <option value="">Todos os períodos</option>
-        <option value="meio_dia">Meio dia</option>
-        <option value="noite">Noite</option>
-      </select>
-      <select id="filtro-resultado" onchange="renderHistorico()">
-        <option value="">Meta e Stop</option>
-        <option value="meta">Só Meta</option>
-        <option value="stop">Só Stop</option>
-      </select>
-      <span id="hist-count" style="font-size:12px;color:var(--muted);margin-left:auto;"></span>
-      <button class="btn-danger-outline" onclick="zerarTudo()">🗑️ Zerar tudo</button>
-    </div>
-    <div class="card" style="overflow-x:auto;">
-      <div id="tabela-historico"></div>
-    </div>
-  </div>
-
-</div><!-- /app -->
-
-<script>
-/* ════════════════════════════════════════
-   ESTADO
-════════════════════════════════════════ */
-let sessoes = [];
-let chartMS = null, chartLucro = null, chartDisc = null;
-let soros2Ativo = true;
+/* ── estado global ── */
+let sessoes      = [];
+let currentUser  = null;
+let chartMS=null, chartLucro=null, chartDisc=null;
+let soros2Ativo  = true;
 
 /* ════════════════════════════════════════
-   STORAGE — localStorage (funciona em qualquer servidor)
+   AUTH
 ════════════════════════════════════════ */
-function salvarStorage() {
-  try { localStorage.setItem('dj_sessoes', JSON.stringify(sessoes)); } catch(e) {}
-}
-function carregarStorage() {
+async function login() {
   try {
-    const d = localStorage.getItem('dj_sessoes');
-    sessoes = d ? JSON.parse(d) : [];
-  } catch(e) { sessoes = []; }
+    const provider = new GoogleAuthProvider();
+    await signInWithPopup(auth, provider);
+  } catch(e) {
+    console.error(e);
+    alert('Erro ao fazer login: ' + e.message);
+  }
+}
+
+async function logout() {
+  await signOut(auth);
+}
+
+onAuthStateChanged(auth, async user => {
+  currentUser = user;
+  if (user) {
+    document.getElementById('tela-login').style.display  = 'none';
+    document.getElementById('tela-app').style.display    = 'block';
+    document.getElementById('user-name').textContent     = user.displayName;
+    document.getElementById('user-photo').src            = user.photoURL || '';
+    document.getElementById('user-photo').style.display = user.photoURL ? 'inline-block' : 'none';
+    await carregarSessoes();
+  } else {
+    document.getElementById('tela-login').style.display  = 'flex';
+    document.getElementById('tela-app').style.display    = 'none';
+    sessoes = [];
+  }
+});
+
+/* ════════════════════════════════════════
+   FIRESTORE — CRUD
+════════════════════════════════════════ */
+async function carregarSessoes() {
+  mostrarLoading(true);
+  try {
+    const q = query(
+      collection(db, 'sessoes'),
+      where('uid', '==', currentUser.uid),
+      orderBy('criadoEm', 'desc')
+    );
+    const snap = await getDocs(q);
+    sessoes = snap.docs.map(d => ({ ...d.data(), fireId: d.id }));
+  } catch(e) {
+    console.error(e);
+    sessoes = [];
+  }
   atualizarContador();
+  mostrarLoading(false);
+}
+
+async function salvarSessao() {
+  const data = document.getElementById('inp-data').value;
+  if (!data) { mostrarMsg('Informe a data da sessão.', false); return; }
+  const lucroRaw = document.getElementById('inp-lucro').value;
+  if (lucroRaw === '' || lucroRaw === null) { mostrarMsg('Informe o lucro ou prejuízo.', false); return; }
+
+  const s = {
+    uid:       currentUser.uid,
+    criadoEm:  Date.now(),
+    data,
+    periodo:   document.getElementById('inp-periodo').value,
+    resultado: document.getElementById('inp-resultado').value,
+    disciplina:document.getElementById('inp-disciplina').value,
+    lucro:     parseFloat(lucroRaw) || 0,
+    obs:       document.getElementById('inp-obs').value.trim(),
+    e1_setup:  document.getElementById('e1-setup').value,
+    e1_valor:  parseFloat(document.getElementById('e1-valor').value) || 0,
+    e1_res:    document.getElementById('e1-res').value,
+    e2_ativo:  soros2Ativo,
+    e2_setup:  soros2Ativo ? document.getElementById('e2-setup').value : null,
+    e2_valor:  soros2Ativo ? (parseFloat(document.getElementById('e2-valor').value) || 0) : null,
+    e2_res:    soros2Ativo ? document.getElementById('e2-res').value : null,
+  };
+
+  try {
+    const docRef = await addDoc(collection(db, 'sessoes'), s);
+    s.fireId = docRef.id;
+    sessoes.unshift(s);
+    atualizarContador();
+    mostrarMsg('✅ Sessão salva com sucesso!', true);
+    ['inp-lucro','inp-obs','e1-valor','e2-valor'].forEach(id => document.getElementById(id).value = '');
+    ['e1-res','e2-res'].forEach(id => document.getElementById(id).value = 'win');
+    ['e1-setup','e2-setup'].forEach(id => document.getElementById(id).value = 'op1');
+    document.getElementById('inp-resultado').value  = 'meta';
+    document.getElementById('inp-disciplina').value = 'ok';
+  } catch(e) {
+    mostrarMsg('Erro ao salvar: ' + e.message, false);
+  }
+}
+
+async function deletarSessao(fireId) {
+  if (!confirm('Remover esta sessão?')) return;
+  try {
+    await deleteDoc(doc(db, 'sessoes', fireId));
+    sessoes = sessoes.filter(s => s.fireId !== fireId);
+    atualizarContador();
+    renderHistorico();
+  } catch(e) {
+    alert('Erro ao deletar: ' + e.message);
+  }
+}
+
+async function zerarTudo() {
+  if (!confirm('Tem certeza que quer apagar TODAS as sessões?\nEssa ação não pode ser desfeita.')) return;
+  try {
+    const proms = sessoes.map(s => deleteDoc(doc(db, 'sessoes', s.fireId)));
+    await Promise.all(proms);
+    sessoes = [];
+    atualizarContador();
+    renderHistorico();
+  } catch(e) {
+    alert('Erro ao zerar: ' + e.message);
+  }
 }
 
 /* ════════════════════════════════════════
@@ -508,127 +168,60 @@ function switchTab(id, btn) {
   btn.classList.add('active');
   document.getElementById('sec-' + id).classList.add('active');
   if (id === 'dashboard') renderDashboard();
-  if (id === 'historico') renderHistorico();
+  if (id === 'historico')  renderHistorico();
 }
 
-/* ════════════════════════════════════════
-   SOROS 2
-════════════════════════════════════════ */
 function toggleSoros2() {
   soros2Ativo = !soros2Ativo;
-  document.getElementById('soros-2-box').style.display = soros2Ativo ? 'block' : 'none';
-  document.getElementById('btn-add-soros2').style.display = soros2Ativo ? 'none' : 'block';
+  document.getElementById('soros-2-box').style.display    = soros2Ativo ? 'block' : 'none';
+  document.getElementById('btn-add-soros2').style.display = soros2Ativo ? 'none'  : 'block';
 }
 
 /* ════════════════════════════════════════
    UTILITÁRIOS
 ════════════════════════════════════════ */
-const fmtM = v => {
-  const n = parseFloat(v) || 0;
-  return (n < 0 ? '-' : '') + 'R$ ' + Math.abs(n).toFixed(2).replace('.', ',');
-};
-const fmtD = d => {
-  if (!d) return '';
-  const p = d.split('-');
-  return p[2] + '/' + p[1] + '/' + p[0];
-};
+const fmtM = v => { const n=parseFloat(v)||0; return (n<0?'-':'')+'R$ '+Math.abs(n).toFixed(2).replace('.',','); };
+const fmtD = d => { if(!d) return ''; const p=d.split('-'); return p[2]+'/'+p[1]+'/'+p[0]; };
+
 function atualizarContador() {
   const t = sessoes.length;
-  document.getElementById('total-sessoes').textContent = t + ' sessã' + (t === 1 ? 'o' : 'ões');
+  document.getElementById('total-sessoes').textContent = t + ' sessã' + (t===1?'o':'ões');
 }
 function mostrarMsg(txt, ok) {
   const el = document.getElementById('msg-form');
   el.textContent = txt;
-  el.style.color = ok ? 'var(--green-text)' : 'var(--red-text)';
-  el.style.background = ok ? 'var(--green-bg)' : 'var(--red-bg)';
+  el.style.color      = ok ? 'var(--green-text)' : 'var(--red-text)';
+  el.style.background = ok ? 'var(--green-bg)'   : 'var(--red-bg)';
   el.style.display = 'block';
-  setTimeout(() => el.style.display = 'none', 2800);
+  setTimeout(() => el.style.display='none', 2800);
 }
-const pBadge = v => v === 'op1'
+function mostrarLoading(show) {
+  document.getElementById('loading').style.display = show ? 'flex' : 'none';
+}
+const pBadge = v => v==='op1'
   ? '<span class="badge badge-op1">OP-01</span>'
   : '<span class="badge badge-op2">OP-02</span>';
-
-/* ════════════════════════════════════════
-   SALVAR SESSÃO
-════════════════════════════════════════ */
-function salvarSessao() {
-  const data = document.getElementById('inp-data').value;
-  if (!data) { mostrarMsg('Informe a data da sessão.', false); return; }
-  const lucroRaw = document.getElementById('inp-lucro').value;
-  if (lucroRaw === '' || lucroRaw === null) { mostrarMsg('Informe o lucro ou prejuízo da sessão.', false); return; }
-
-  const s = {
-    id: Date.now(),
-    data,
-    periodo: document.getElementById('inp-periodo').value,
-    resultado: document.getElementById('inp-resultado').value,
-    disciplina: document.getElementById('inp-disciplina').value,
-    lucro: parseFloat(lucroRaw) || 0,
-    obs: document.getElementById('inp-obs').value.trim(),
-    e1_setup: document.getElementById('e1-setup').value,
-    e1_valor: parseFloat(document.getElementById('e1-valor').value) || 0,
-    e1_res: document.getElementById('e1-res').value,
-    e2_ativo: soros2Ativo,
-    e2_setup: soros2Ativo ? document.getElementById('e2-setup').value : null,
-    e2_valor: soros2Ativo ? (parseFloat(document.getElementById('e2-valor').value) || 0) : null,
-    e2_res: soros2Ativo ? document.getElementById('e2-res').value : null,
-  };
-
-  sessoes.unshift(s);
-  salvarStorage();
-  atualizarContador();
-  mostrarMsg('✅ Sessão salva com sucesso!', true);
-
-  ['inp-lucro','inp-obs','e1-valor','e2-valor'].forEach(id => document.getElementById(id).value = '');
-  ['e1-res','e2-res'].forEach(id => document.getElementById(id).value = 'win');
-  ['e1-setup','e2-setup'].forEach(id => document.getElementById(id).value = 'op1');
-  document.getElementById('inp-resultado').value = 'meta';
-  document.getElementById('inp-disciplina').value = 'ok';
-}
-
-/* ════════════════════════════════════════
-   DELETAR / ZERAR
-════════════════════════════════════════ */
-function deletarSessao(id) {
-  if (!confirm('Remover esta sessão?')) return;
-  sessoes = sessoes.filter(s => s.id !== id);
-  salvarStorage();
-  atualizarContador();
-  renderHistorico();
-}
-function zerarTudo() {
-  if (!confirm('Tem certeza que quer apagar TODAS as sessões?\nEssa ação não pode ser desfeita.')) return;
-  sessoes = [];
-  salvarStorage();
-  atualizarContador();
-  renderHistorico();
-}
 
 /* ════════════════════════════════════════
    ASSERTIVIDADE
 ════════════════════════════════════════ */
 function calcAssert(arr) {
-  let tot = 0, wins = 0, op1t = 0, op1w = 0, op2t = 0, op2w = 0;
-  arr.forEach(s => {
-    tot++; if (s.e1_res === 'win') wins++;
-    if (s.e1_setup === 'op1') { op1t++; if (s.e1_res === 'win') op1w++; }
-    else { op2t++; if (s.e1_res === 'win') op2w++; }
-    if (s.e2_ativo && s.e2_valor) {
-      tot++; if (s.e2_res === 'win') wins++;
-      if (s.e2_setup === 'op1') { op1t++; if (s.e2_res === 'win') op1w++; }
-      else { op2t++; if (s.e2_res === 'win') op2w++; }
+  let tot=0,wins=0,op1t=0,op1w=0,op2t=0,op2w=0;
+  arr.forEach(s=>{
+    tot++; if(s.e1_res==='win') wins++;
+    if(s.e1_setup==='op1'){op1t++;if(s.e1_res==='win')op1w++;}else{op2t++;if(s.e1_res==='win')op2w++;}
+    if(s.e2_ativo&&s.e2_valor){
+      tot++;if(s.e2_res==='win')wins++;
+      if(s.e2_setup==='op1'){op1t++;if(s.e2_res==='win')op1w++;}else{op2t++;if(s.e2_res==='win')op2w++;}
     }
   });
-  return {
-    tot, wins, op1t, op1w, op2t, op2w,
-    pct:   tot  > 0 ? ((wins / tot)   * 100).toFixed(1) : '0.0',
-    op1pct: op1t > 0 ? ((op1w / op1t) * 100).toFixed(1) : '0.0',
-    op2pct: op2t > 0 ? ((op2w / op2t) * 100).toFixed(1) : '0.0',
-  };
+  return {tot,wins,op1t,op1w,op2t,op2w,
+    pct:   tot >0?((wins/tot)*100).toFixed(1):'0.0',
+    op1pct:op1t>0?((op1w/op1t)*100).toFixed(1):'0.0',
+    op2pct:op2t>0?((op2w/op2t)*100).toFixed(1):'0.0'};
 }
-
 function pctBarHtml(pct, color) {
-  const v = parseFloat(pct) || 0;
+  const v=parseFloat(pct)||0;
   return `<div class="pct-bar-wrap">
     <div class="pct-bar-track"><div class="pct-bar-fill" style="width:${v}%;background:${color};"></div></div>
     <span class="pct-bar-label" style="color:${color};">${pct}%</span>
@@ -639,202 +232,444 @@ function pctBarHtml(pct, color) {
    DASHBOARD
 ════════════════════════════════════════ */
 function renderDashboard() {
-  const total = sessoes.length;
-  const metas = sessoes.filter(s => s.resultado === 'meta').length;
-  const lucroTotal = sessoes.reduce((a, s) => a + s.lucro, 0);
-  const discOk = sessoes.filter(s => s.disciplina === 'ok').length;
-  const ga = calcAssert(sessoes);
+  const total=sessoes.length;
+  const metas=sessoes.filter(s=>s.resultado==='meta').length;
+  const lucroTotal=sessoes.reduce((a,s)=>a+s.lucro,0);
+  const discOk=sessoes.filter(s=>s.disciplina==='ok').length;
+  const ga=calcAssert(sessoes);
 
-  /* métricas */
-  document.getElementById('dash-metrics').innerHTML = `
-    <div class="metric">
-      <div class="metric-label">Total sessões</div>
-      <div class="metric-val">${total}</div>
-    </div>
-    <div class="metric">
-      <div class="metric-label">Taxa de meta</div>
-      <div class="metric-val" style="color:var(--green-text);">${total > 0 ? ((metas / total) * 100).toFixed(1) : 0}%</div>
-    </div>
-    <div class="metric">
-      <div class="metric-label">Assertividade</div>
-      <div class="metric-val" style="color:var(--blue);">${ga.pct}%</div>
-    </div>
-    <div class="metric">
-      <div class="metric-label">Lucro total</div>
-      <div class="metric-val ${lucroTotal >= 0 ? 'pos' : 'neg'}">${fmtM(lucroTotal)}</div>
-    </div>
-    <div class="metric">
-      <div class="metric-label">Disciplina</div>
-      <div class="metric-val" style="color:var(--purple);">${total > 0 ? ((discOk / total) * 100).toFixed(0) : 0}%</div>
-    </div>
+  document.getElementById('dash-metrics').innerHTML=`
+    <div class="metric"><div class="metric-label">Total sessões</div><div class="metric-val">${total}</div></div>
+    <div class="metric"><div class="metric-label">Taxa de meta</div><div class="metric-val" style="color:var(--green-text);">${total>0?((metas/total)*100).toFixed(1):0}%</div></div>
+    <div class="metric"><div class="metric-label">Assertividade</div><div class="metric-val" style="color:var(--blue);">${ga.pct}%</div></div>
+    <div class="metric"><div class="metric-label">Lucro total</div><div class="metric-val ${lucroTotal>=0?'pos':'neg'}">${fmtM(lucroTotal)}</div></div>
+    <div class="metric"><div class="metric-label">Disciplina</div><div class="metric-val" style="color:var(--purple);">${total>0?((discOk/total)*100).toFixed(0):0}%</div></div>
   `;
 
-  /* assertividade detalhe */
-  const md = sessoes.filter(s => s.periodo === 'meio_dia');
-  const nt = sessoes.filter(s => s.periodo === 'noite');
-  const amd = calcAssert(md), an = calcAssert(nt);
-  const assertCols = [
-    { title: 'GERAL', sub: ga.wins + '/' + ga.tot + ' ops', a: ga },
-    { title: 'MEIO DIA', sub: amd.wins + '/' + amd.tot + ' ops', a: amd },
-    { title: 'NOITE', sub: an.wins + '/' + an.tot + ' ops', a: an },
-  ];
-  document.getElementById('assert-detail').innerHTML = `
+  const md=sessoes.filter(s=>s.periodo==='meio_dia'), nt=sessoes.filter(s=>s.periodo==='noite');
+  const amd=calcAssert(md), an=calcAssert(nt);
+  document.getElementById('assert-detail').innerHTML=`
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;">
-      ${assertCols.map(c => `
-        <div class="assert-col">
+      ${[{title:'GERAL',sub:ga.wins+'/'+ga.tot+' ops',a:ga},{title:'MEIO DIA',sub:amd.wins+'/'+amd.tot+' ops',a:amd},{title:'NOITE',sub:an.wins+'/'+an.tot+' ops',a:an}]
+        .map(c=>`<div>
           <div style="font-size:11px;font-weight:600;color:var(--muted);letter-spacing:0.04em;">${c.title} — ${c.sub}</div>
-          ${pctBarHtml(c.a.pct, '#39d353')}
-          <div class="assert-row-label">OP-01 Tendência</div>
-          ${pctBarHtml(c.a.op1pct, '#58a6ff')}
-          <div class="assert-row-label">OP-02 Lateral</div>
-          ${pctBarHtml(c.a.op2pct, '#d29922')}
+          ${pctBarHtml(c.a.pct,'#39d353')}
+          <div class="assert-row-label">OP-01 Tendência</div>${pctBarHtml(c.a.op1pct,'#58a6ff')}
+          <div class="assert-row-label">OP-02 Lateral</div>${pctBarHtml(c.a.op2pct,'#d29922')}
         </div>`).join('')}
     </div>`;
 
-  /* por período */
-  function periodoCard(arr, elId) {
-    if (!arr.length) { document.getElementById(elId).innerHTML = '<div class="empty-state">Sem dados</div>'; return; }
-    const m = arr.filter(s => s.resultado === 'meta').length;
-    const lucro = arr.reduce((a, s) => a + s.lucro, 0);
-    const pa = calcAssert(arr);
-    document.getElementById(elId).innerHTML = `
+  function periodoCard(arr,elId){
+    if(!arr.length){document.getElementById(elId).innerHTML='<div class="empty-state">Sem dados</div>';return;}
+    const m=arr.filter(s=>s.resultado==='meta').length,lucro=arr.reduce((a,s)=>a+s.lucro,0),pa=calcAssert(arr);
+    document.getElementById(elId).innerHTML=`
       <div class="grid-4s">
         <div class="metric"><div class="metric-label">Sessões</div><div class="metric-val" style="font-size:20px;">${arr.length}</div></div>
-        <div class="metric"><div class="metric-label">Taxa meta</div><div class="metric-val" style="font-size:20px;color:var(--green-text);">${((m / arr.length) * 100).toFixed(0)}%</div></div>
+        <div class="metric"><div class="metric-label">Taxa meta</div><div class="metric-val" style="font-size:20px;color:var(--green-text);">${((m/arr.length)*100).toFixed(0)}%</div></div>
         <div class="metric"><div class="metric-label">Assertividade</div><div class="metric-val" style="font-size:20px;color:var(--blue);">${pa.pct}%</div></div>
-        <div class="metric"><div class="metric-label">Lucro</div><div class="metric-val ${lucro >= 0 ? 'pos' : 'neg'}" style="font-size:20px;">${fmtM(lucro)}</div></div>
-      </div>`;
-  }
-  periodoCard(md, 'stat-meio');
-  periodoCard(nt, 'stat-noite');
+        <div class="metric"><div class="metric-label">Lucro</div><div class="metric-val ${lucro>=0?'pos':'neg'}" style="font-size:20px;">${fmtM(lucro)}</div></div>
+      </div>`;}
+  periodoCard(md,'stat-meio'); periodoCard(nt,'stat-noite');
 
-  /* charts */
-  const gridColor = 'rgba(255,255,255,0.06)';
-  const tickColor = 'rgba(255,255,255,0.4)';
+  const gc='rgba(255,255,255,0.06)', tc='rgba(255,255,255,0.4)';
+  if(chartMS)chartMS.destroy();
+  chartMS=new Chart(document.getElementById('chart-ms'),{type:'doughnut',
+    data:{labels:['Meta','Stop'],datasets:[{data:[metas,total-metas],backgroundColor:['#3fb950','#f85149'],borderWidth:0,hoverOffset:4}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{display:false}}}});
 
-  if (chartMS) chartMS.destroy();
-  chartMS = new Chart(document.getElementById('chart-ms'), {
-    type: 'doughnut',
-    data: {
-      labels: ['Meta', 'Stop'],
-      datasets: [{ data: [metas, total - metas], backgroundColor: ['#3fb950', '#f85149'], borderWidth: 0, hoverOffset: 4 }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false, cutout: '68%',
-      plugins: { legend: { display: false }, tooltip: { callbacks: { label: ctx => ' ' + ctx.label + ': ' + ctx.raw } } }
-    }
-  });
+  if(chartDisc)chartDisc.destroy();
+  chartDisc=new Chart(document.getElementById('chart-disc'),{type:'doughnut',
+    data:{labels:['Fiz tudo certo','Cometi erro'],datasets:[{data:[discOk,total-discOk],backgroundColor:['#58a6ff','#d29922'],borderWidth:0,hoverOffset:4}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{display:false}}}});
 
-  if (chartDisc) chartDisc.destroy();
-  chartDisc = new Chart(document.getElementById('chart-disc'), {
-    type: 'doughnut',
-    data: {
-      labels: ['Fiz tudo certo', 'Cometi erro'],
-      datasets: [{ data: [discOk, total - discOk], backgroundColor: ['#58a6ff', '#d29922'], borderWidth: 0, hoverOffset: 4 }]
-    },
-    options: { responsive: true, maintainAspectRatio: false, cutout: '68%', plugins: { legend: { display: false } } }
-  });
-
-  const sorted = [...sessoes].sort((a, b) => a.data > b.data ? 1 : -1);
-  let acc = 0;
-  const lucroData = sorted.map(s => { acc += s.lucro; return parseFloat(acc.toFixed(2)); });
-
-  if (chartLucro) chartLucro.destroy();
-  chartLucro = new Chart(document.getElementById('chart-lucro'), {
-    type: 'line',
-    data: {
-      labels: sorted.map(s => fmtD(s.data)),
-      datasets: [{
-        label: 'Lucro acumulado',
-        data: lucroData,
-        borderColor: '#58a6ff',
-        backgroundColor: 'rgba(88,166,255,0.08)',
-        fill: true, tension: 0.35, pointRadius: 3,
-        pointBackgroundColor: '#58a6ff',
-      }]
-    },
-    options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: false } },
-      scales: {
-        x: { ticks: { color: tickColor, font: { size: 10 }, maxRotation: 45, autoSkip: true }, grid: { display: false } },
-        y: { ticks: { color: tickColor, font: { size: 10 }, callback: v => 'R$' + v }, grid: { color: gridColor } }
-      }
-    }
-  });
+  const sorted=[...sessoes].sort((a,b)=>a.data>b.data?1:-1);
+  let acc=0;
+  if(chartLucro)chartLucro.destroy();
+  chartLucro=new Chart(document.getElementById('chart-lucro'),{type:'line',
+    data:{labels:sorted.map(s=>fmtD(s.data)),
+      datasets:[{label:'Lucro acumulado',data:sorted.map(s=>{acc+=s.lucro;return parseFloat(acc.toFixed(2));}),
+        borderColor:'#58a6ff',backgroundColor:'rgba(88,166,255,0.08)',fill:true,tension:0.35,pointRadius:3,pointBackgroundColor:'#58a6ff'}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},
+      scales:{x:{ticks:{color:tc,font:{size:10},maxRotation:45,autoSkip:true},grid:{display:false}},
+              y:{ticks:{color:tc,font:{size:10},callback:v=>'R$'+v},grid:{color:gc}}}}});
 }
 
 /* ════════════════════════════════════════
    HISTÓRICO
 ════════════════════════════════════════ */
 function renderHistorico() {
-  const fp = document.getElementById('filtro-periodo').value;
-  const fr = document.getElementById('filtro-resultado').value;
-  let lista = sessoes;
-  if (fp) lista = lista.filter(s => s.periodo === fp);
-  if (fr) lista = lista.filter(s => s.resultado === fr);
-
-  document.getElementById('hist-count').textContent = lista.length + ' registro(s)';
-
-  if (!lista.length) {
-    document.getElementById('tabela-historico').innerHTML =
-      '<div class="empty-state">😶 Nenhuma sessão encontrada</div>';
+  const fp=document.getElementById('filtro-periodo').value;
+  const fr=document.getElementById('filtro-resultado').value;
+  let lista=sessoes;
+  if(fp) lista=lista.filter(s=>s.periodo===fp);
+  if(fr) lista=lista.filter(s=>s.resultado===fr);
+  document.getElementById('hist-count').textContent=lista.length+' registro(s)';
+  if(!lista.length){
+    document.getElementById('tabela-historico').innerHTML='<div class="empty-state">😶 Nenhuma sessão encontrada</div>';
     return;
   }
-
-  let html = `<table>
-    <thead><tr>
-      <th>Data</th><th>Período</th><th>E1</th><th>E2</th>
-      <th>Sessão</th><th>Lucro</th><th>Disciplina</th><th>Obs</th><th></th>
-    </tr></thead><tbody>`;
-
-  lista.forEach(s => {
-    const per = s.periodo === 'meio_dia'
-      ? '<span class="badge badge-meio">Meio dia</span>'
-      : '<span class="badge badge-noite">Noite</span>';
-    const res = s.resultado === 'meta'
-      ? '<span class="badge badge-meta">Meta</span>'
-      : '<span class="badge badge-stop">Stop</span>';
-    const disc = s.disciplina === 'ok'
-      ? '<span class="badge badge-ok">Correto</span>'
-      : '<span class="badge badge-err">Erro</span>';
-    const e1 = s.e1_valor > 0
-      ? `${pBadge(s.e1_setup)} R$${s.e1_valor.toFixed(2)} <span class="badge ${s.e1_res === 'win' ? 'badge-win' : 'badge-loss'}">${s.e1_res}</span>`
-      : '<span style="color:var(--muted)">—</span>';
-    const e2 = s.e2_ativo && s.e2_valor
-      ? `${pBadge(s.e2_setup)} R$${s.e2_valor.toFixed(2)} <span class="badge ${s.e2_res === 'win' ? 'badge-win' : 'badge-loss'}">${s.e2_res}</span>`
-      : '<span style="color:var(--muted)">—</span>';
-    const obsHtml = s.obs
-      ? `<span style="cursor:pointer;" title="${s.obs.replace(/"/g,'&quot;')}" onclick="alert(this.title)">📝</span>`
-      : '<span style="color:var(--muted)">—</span>';
-
-    html += `<tr>
-      <td style="white-space:nowrap;">${fmtD(s.data)}</td>
-      <td>${per}</td>
-      <td style="font-size:11px;">${e1}</td>
-      <td style="font-size:11px;">${e2}</td>
-      <td>${res}</td>
-      <td class="${s.lucro >= 0 ? 'pos' : 'neg'}" style="font-weight:600;">${fmtM(s.lucro)}</td>
-      <td>${disc}</td>
-      <td style="text-align:center;">${obsHtml}</td>
-      <td><button class="btn-danger" onclick="deletarSessao(${s.id})">✕</button></td>
+  let html=`<table><thead><tr>
+    <th>Data</th><th>Período</th><th>E1</th><th>E2</th><th>Sessão</th><th>Lucro</th><th>Disciplina</th><th>Obs</th><th></th>
+  </tr></thead><tbody>`;
+  lista.forEach(s=>{
+    const per=s.periodo==='meio_dia'?'<span class="badge badge-meio">Meio dia</span>':'<span class="badge badge-noite">Noite</span>';
+    const res=s.resultado==='meta'?'<span class="badge badge-meta">Meta</span>':'<span class="badge badge-stop">Stop</span>';
+    const disc=s.disciplina==='ok'?'<span class="badge badge-ok">Correto</span>':'<span class="badge badge-err">Erro</span>';
+    const e1=s.e1_valor>0?`${pBadge(s.e1_setup)} R$${s.e1_valor.toFixed(2)} <span class="badge ${s.e1_res==='win'?'badge-win':'badge-loss'}">${s.e1_res}</span>`:'<span style="color:var(--muted)">—</span>';
+    const e2=s.e2_ativo&&s.e2_valor?`${pBadge(s.e2_setup)} R$${s.e2_valor.toFixed(2)} <span class="badge ${s.e2_res==='win'?'badge-win':'badge-loss'}">${s.e2_res}</span>`:'<span style="color:var(--muted)">—</span>';
+    const obs=s.obs?`<span style="cursor:pointer;" title="${s.obs.replace(/"/g,'&quot;')}" onclick="alert(this.title)">📝</span>`:'<span style="color:var(--muted)">—</span>';
+    html+=`<tr>
+      <td style="white-space:nowrap;">${fmtD(s.data)}</td><td>${per}</td>
+      <td style="font-size:11px;">${e1}</td><td style="font-size:11px;">${e2}</td>
+      <td>${res}</td><td class="${s.lucro>=0?'pos':'neg'}" style="font-weight:600;">${fmtM(s.lucro)}</td>
+      <td>${disc}</td><td style="text-align:center;">${obs}</td>
+      <td><button class="btn-danger" onclick="window._deletar('${s.fireId}')">✕</button></td>
     </tr>`;
   });
-
-  html += '</tbody></table>';
-  document.getElementById('tabela-historico').innerHTML = html;
+  html+='</tbody></table>';
+  document.getElementById('tabela-historico').innerHTML=html;
 }
 
-/* ════════════════════════════════════════
-   INIT
-════════════════════════════════════════ */
-const today = new Date();
-document.getElementById('inp-data').value =
-  today.getFullYear() + '-' +
-  String(today.getMonth() + 1).padStart(2, '0') + '-' +
-  String(today.getDate()).padStart(2, '0');
+/* ── expor funções pro HTML ── */
+window._login    = login;
+window._logout   = logout;
+window._salvar   = salvarSessao;
+window._deletar  = deletarSessao;
+window._zerar    = zerarTudo;
+window._tab      = switchTab;
+window._soros2   = toggleSoros2;
 
-carregarStorage();
+/* ── init: data de hoje ── */
+const today=new Date();
+document.getElementById('inp-data').value=
+  today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
+
 </script>
+
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+:root{
+  --bg:#0d1117;--bg2:#161b22;--bg3:#1c2230;
+  --border:rgba(255,255,255,0.08);
+  --text:#e6edf3;--muted:#8b949e;
+  --green:#3fb950;--green-bg:rgba(63,185,80,0.12);--green-text:#7ee787;
+  --red:#f85149;--red-bg:rgba(248,81,73,0.12);--red-text:#ff7b72;
+  --blue:#58a6ff;--blue-bg:rgba(88,166,255,0.12);
+  --purple:#bc8cff;--purple-bg:rgba(188,140,255,0.12);
+  --amber:#d29922;--amber-bg:rgba(210,153,34,0.12);--amber-text:#e3b341;
+  --radius:10px;--radius-sm:6px;
+}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;font-size:14px;line-height:1.5;}
+
+/* ── login ── */
+#tela-login{display:flex;flex-direction:column;align-items:center;justify-content:center;min-height:100vh;gap:24px;padding:20px;}
+.login-card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:40px 48px;text-align:center;max-width:380px;width:100%;}
+.login-card h2{font-size:22px;font-weight:600;margin-bottom:8px;}
+.login-card p{color:var(--muted);font-size:14px;margin-bottom:28px;}
+.btn-google{display:inline-flex;align-items:center;gap:10px;background:white;color:#1f1f1f;border:none;border-radius:8px;padding:12px 24px;font-size:14px;font-weight:500;cursor:pointer;transition:opacity 0.15s;}
+.btn-google:hover{opacity:0.9;}
+.btn-google img{width:20px;height:20px;}
+
+/* ── app ── */
+#tela-app{display:none;}
+.app{max-width:960px;margin:0 auto;padding:0 16px 60px;}
+header{padding:24px 0 0;display:flex;align-items:center;justify-content:space-between;margin-bottom:24px;flex-wrap:wrap;gap:10px;}
+header h1{font-size:20px;font-weight:600;display:flex;align-items:center;gap:8px;}
+.user-info{display:flex;align-items:center;gap:10px;}
+.user-info img{width:30px;height:30px;border-radius:50%;object-fit:cover;}
+#user-name{font-size:13px;color:var(--muted);}
+.btn-logout{background:transparent;border:1px solid var(--border);color:var(--muted);font-size:12px;padding:5px 10px;border-radius:var(--radius-sm);cursor:pointer;}
+.btn-logout:hover{border-color:var(--red);color:var(--red-text);}
+#total-sessoes{font-size:12px;color:var(--muted);}
+
+/* ── loading ── */
+#loading{display:none;position:fixed;inset:0;background:rgba(13,17,23,0.85);z-index:99;align-items:center;justify-content:center;flex-direction:column;gap:14px;font-size:14px;color:var(--muted);}
+.spinner{width:32px;height:32px;border:3px solid var(--border);border-top-color:var(--blue);border-radius:50%;animation:spin 0.7s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* ── tabs ── */
+.tabs{display:flex;gap:2px;border-bottom:1px solid var(--border);margin-bottom:24px;}
+.tab{background:none;border:none;color:var(--muted);cursor:pointer;padding:10px 18px;font-size:14px;border-bottom:2px solid transparent;margin-bottom:-1px;transition:all 0.15s;}
+.tab:hover{color:var(--text);}
+.tab.active{color:var(--text);border-bottom-color:var(--blue);font-weight:500;}
+
+/* ── sections ── */
+.section{display:none;}.section.active{display:block;}
+
+/* ── card ── */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;margin-bottom:14px;}
+
+/* ── form ── */
+.form-row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;}
+.field{flex:1;min-width:120px;display:flex;flex-direction:column;gap:5px;}
+.field label{font-size:12px;color:var(--muted);font-weight:500;}
+input[type="text"],input[type="number"],input[type="date"],select,textarea{
+  background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);
+  color:var(--text);padding:8px 10px;font-size:13px;width:100%;transition:border-color 0.15s;font-family:inherit;}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--blue);}
+textarea{resize:vertical;min-height:64px;}
+select option{background:var(--bg2);}
+.sep{height:1px;background:var(--border);margin:16px 0;}
+
+/* ── soros box ── */
+.soros-box{background:var(--bg3);border:1px solid var(--border);border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:10px;}
+.soros-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.04em;}
+
+/* ── buttons ── */
+.btn{border:none;border-radius:var(--radius-sm);cursor:pointer;font-size:13px;font-weight:500;padding:9px 18px;transition:all 0.15s;display:inline-flex;align-items:center;gap:6px;font-family:inherit;}
+.btn-primary{background:var(--blue);color:#0d1117;}.btn-primary:hover{background:#79bcff;}
+.btn-ghost-dash{background:transparent;border:1px dashed var(--border);color:var(--muted);width:100%;margin-bottom:10px;justify-content:center;}
+.btn-ghost-dash:hover{border-color:var(--blue);color:var(--blue);}
+.btn-danger{background:transparent;border:1px solid var(--border);color:var(--red-text);font-size:11px;padding:3px 8px;border-radius:var(--radius-sm);cursor:pointer;}
+.btn-danger:hover{background:var(--red-bg);border-color:var(--red);}
+.btn-danger-outline{background:transparent;border:1px solid var(--red);color:var(--red-text);padding:7px 14px;border-radius:var(--radius-sm);font-size:13px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:6px;font-family:inherit;}
+.btn-danger-outline:hover{background:var(--red-bg);}
+
+/* ── badges ── */
+.badge{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:500;white-space:nowrap;}
+.badge-win  {background:var(--green-bg);color:var(--green-text);border:1px solid rgba(63,185,80,0.25);}
+.badge-loss {background:var(--red-bg);color:var(--red-text);border:1px solid rgba(248,81,73,0.25);}
+.badge-meta {background:var(--green-bg);color:var(--green-text);border:1px solid rgba(63,185,80,0.25);}
+.badge-stop {background:var(--red-bg);color:var(--red-text);border:1px solid rgba(248,81,73,0.25);}
+.badge-ok   {background:var(--blue-bg);color:var(--blue);border:1px solid rgba(88,166,255,0.25);}
+.badge-err  {background:var(--amber-bg);color:var(--amber-text);border:1px solid rgba(210,153,34,0.25);}
+.badge-meio {background:var(--purple-bg);color:var(--purple);border:1px solid rgba(188,140,255,0.25);}
+.badge-noite{background:rgba(30,20,60,0.8);color:#a78bfa;border:1px solid rgba(167,139,250,0.25);}
+.badge-op1  {background:rgba(20,60,40,0.6);color:#6ee7b7;border:1px solid rgba(110,231,183,0.2);font-size:10px;}
+.badge-op2  {background:rgba(60,40,10,0.6);color:#fcd34d;border:1px solid rgba(252,211,77,0.2);font-size:10px;}
+
+/* ── metrics ── */
+.grid-5{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:14px;}
+.grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-bottom:14px;}
+.grid-4s{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
+.metric{background:var(--bg3);border-radius:var(--radius-sm);padding:14px;border:1px solid var(--border);}
+.metric-label{font-size:11px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.04em;}
+.metric-val{font-size:24px;font-weight:600;}
+
+/* ── pct bar ── */
+.pct-bar-wrap{display:flex;align-items:center;gap:8px;margin-top:5px;}
+.pct-bar-track{flex:1;height:5px;background:rgba(255,255,255,0.08);border-radius:3px;overflow:hidden;}
+.pct-bar-fill{height:100%;border-radius:3px;transition:width 0.4s ease;}
+.pct-bar-label{font-size:12px;font-weight:600;min-width:40px;text-align:right;}
+
+/* ── table ── */
+table{width:100%;border-collapse:collapse;font-size:12px;}
+th{text-align:left;font-size:11px;font-weight:500;color:var(--muted);padding:6px 8px;border-bottom:1px solid var(--border);text-transform:uppercase;letter-spacing:0.04em;white-space:nowrap;}
+td{padding:8px;border-bottom:1px solid var(--border);vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:rgba(255,255,255,0.02);}
+
+.pos{color:var(--green-text);}.neg{color:var(--red-text);}
+.chart-wrap{position:relative;width:100%;height:220px;}
+.empty-state{text-align:center;padding:32px;color:var(--muted);font-size:13px;}
+.sec-title{font-size:12px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:0.06em;margin-bottom:12px;}
+#msg-form{display:none;text-align:center;margin-top:12px;font-size:13px;padding:8px;border-radius:var(--radius-sm);}
+.assert-row-label{font-size:11px;color:var(--muted);margin-top:10px;margin-bottom:2px;}
+.hist-toolbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:14px;}
+.hist-toolbar select{width:auto;min-width:140px;}
+
+@media(max-width:640px){
+  .grid-5{grid-template-columns:repeat(2,1fr);}
+  .grid-2{grid-template-columns:1fr;}
+  .grid-4s{grid-template-columns:repeat(2,1fr);}
+}
+</style>
+</head>
+<body>
+
+<!-- ── loading overlay ── -->
+<div id="loading"><div class="spinner"></div>Carregando sessões...</div>
+
+<!-- ═══════════════════ TELA DE LOGIN ═══════════════════ -->
+<div id="tela-login">
+  <div class="login-card">
+    <div style="font-size:40px;margin-bottom:12px;">📊</div>
+    <h2>Diário de Trade</h2>
+    <p>Faça login para acessar seus registros de qualquer aparelho.</p>
+    <button class="btn-google" onclick="window._login()">
+      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="Google">
+      Entrar com Google
+    </button>
+  </div>
+</div>
+
+<!-- ═══════════════════ TELA DO APP ═══════════════════ -->
+<div id="tela-app">
+  <div class="app">
+    <header>
+      <h1>📊 Diário de Trade</h1>
+      <div class="user-info">
+        <img id="user-photo" src="" alt="foto" style="display:none;">
+        <span id="user-name"></span>
+        <span id="total-sessoes">0 sessões</span>
+        <button class="btn-logout" onclick="window._logout()">Sair</button>
+      </div>
+    </header>
+
+    <div class="tabs">
+      <button class="tab active" onclick="window._tab('registrar',this)">➕ Registrar</button>
+      <button class="tab" onclick="window._tab('dashboard',this)">📈 Dashboard</button>
+      <button class="tab" onclick="window._tab('historico',this)">📋 Histórico</button>
+    </div>
+
+    <!-- REGISTRAR -->
+    <div id="sec-registrar" class="section active">
+      <div class="card">
+        <div class="sec-title">Nova sessão</div>
+        <div class="form-row">
+          <div class="field"><label>Data</label><input type="date" id="inp-data"></div>
+          <div class="field"><label>Período</label>
+            <select id="inp-periodo"><option value="meio_dia">Meio dia</option><option value="noite">Noite</option></select>
+          </div>
+          <div class="field"><label>Sessão</label>
+            <select id="inp-resultado"><option value="meta">Meta</option><option value="stop">Stop</option></select>
+          </div>
+          <div class="field"><label>Disciplina</label>
+            <select id="inp-disciplina"><option value="ok">Fiz tudo certo</option><option value="erro">Cometi erro</option></select>
+          </div>
+        </div>
+        <div class="sep"></div>
+        <div class="sec-title">Entradas — Soros nível 2</div>
+
+        <div class="soros-box">
+          <div class="soros-header"><span>Entrada 1</span></div>
+          <div class="form-row" style="margin-bottom:0;">
+            <div class="field"><label>Setup</label>
+              <select id="e1-setup"><option value="op1">OP-01 — Tendência</option><option value="op2">OP-02 — Lateral</option></select>
+            </div>
+            <div class="field"><label>Valor (R$)</label><input type="number" id="e1-valor" min="0" step="0.01" placeholder="0,00"></div>
+            <div class="field"><label>Resultado</label>
+              <select id="e1-res"><option value="win">Win</option><option value="loss">Loss</option></select>
+            </div>
+          </div>
+        </div>
+
+        <div class="soros-box" id="soros-2-box">
+          <div class="soros-header">
+            <span>Entrada 2 (Soros)</span>
+            <button class="btn-danger" onclick="window._soros2()">Remover</button>
+          </div>
+          <div class="form-row" style="margin-bottom:0;">
+            <div class="field"><label>Setup</label>
+              <select id="e2-setup"><option value="op1">OP-01 — Tendência</option><option value="op2">OP-02 — Lateral</option></select>
+            </div>
+            <div class="field"><label>Valor (R$)</label><input type="number" id="e2-valor" min="0" step="0.01" placeholder="0,00"></div>
+            <div class="field"><label>Resultado</label>
+              <select id="e2-res"><option value="win">Win</option><option value="loss">Loss</option></select>
+            </div>
+          </div>
+        </div>
+
+        <button class="btn btn-ghost-dash" id="btn-add-soros2" onclick="window._soros2()" style="display:none;">
+          ➕ Adicionar entrada 2 (Soros)
+        </button>
+        <div class="sep"></div>
+        <div class="form-row">
+          <div class="field" style="flex:1;">
+            <label>Lucro / Prejuízo da sessão (R$) — use - para prejuízo</label>
+            <input type="number" id="inp-lucro" step="0.01" placeholder="Ex: 25.00 ou -10.00">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="field" style="flex:1;">
+            <label>Observação (opcional)</label>
+            <textarea id="inp-obs" placeholder="Setup, condição do mercado, erros cometidos..."></textarea>
+          </div>
+        </div>
+        <div style="display:flex;justify-content:flex-end;">
+          <button class="btn btn-primary" onclick="window._salvar()">💾 Salvar sessão</button>
+        </div>
+        <div id="msg-form"></div>
+      </div>
+    </div>
+
+    <!-- DASHBOARD -->
+    <div id="sec-dashboard" class="section">
+      <div class="grid-5" id="dash-metrics"></div>
+      <div class="grid-2">
+        <div class="card"><div class="sec-title">Meta vs Stop</div><div class="chart-wrap"><canvas id="chart-ms"></canvas></div></div>
+        <div class="card"><div class="sec-title">Lucro acumulado</div><div class="chart-wrap"><canvas id="chart-lucro"></canvas></div></div>
+      </div>
+      <div class="card">
+        <div class="sec-title">Assertividade das entradas (win / total operações)</div>
+        <div id="assert-detail"></div>
+      </div>
+      <div class="grid-2">
+        <div class="card"><div class="sec-title">📅 Meio dia</div><div id="stat-meio" class="empty-state">Sem dados</div></div>
+        <div class="card"><div class="sec-title">🌙 Noite</div><div id="stat-noite" class="empty-state">Sem dados</div></div>
+      </div>
+      <div class="card"><div class="sec-title">Disciplina</div><div class="chart-wrap" style="height:160px;"><canvas id="chart-disc"></canvas></div></div>
+    </div>
+
+    <!-- HISTÓRICO -->
+    <div id="sec-historico" class="section">
+      <div class="hist-toolbar">
+        <select id="filtro-periodo" onchange="renderHistorico()">
+          <option value="">Todos os períodos</option><option value="meio_dia">Meio dia</option><option value="noite">Noite</option>
+        </select>
+        <select id="filtro-resultado" onchange="renderHistorico()">
+          <option value="">Meta e Stop</option><option value="meta">Só Meta</option><option value="stop">Só Stop</option>
+        </select>
+        <span id="hist-count" style="font-size:12px;color:var(--muted);margin-left:auto;"></span>
+        <button class="btn-danger-outline" onclick="window._zerar()">🗑️ Zerar tudo</button>
+      </div>
+      <div class="card" style="overflow-x:auto;"><div id="tabela-historico"></div></div>
+    </div>
+
+  </div>
+</div>
+
+<!--
+═══════════════════════════════════════════════════════════
+ 📋 PASSO A PASSO — CONFIGURAR FIREBASE (5 minutos)
+═══════════════════════════════════════════════════════════
+
+ 1. Acesse https://firebase.google.com e clique em "Ir para o console"
+
+ 2. Clique em "Criar um projeto"
+    → Dê um nome (ex: diario-trade-danrlei)
+    → Pode desativar o Google Analytics
+    → Clique em "Criar projeto"
+
+ 3. No painel do projeto, clique no ícone </> (Web) para registrar o app
+    → Dê um apelido (ex: diario-trade)
+    → Clique em "Registrar app"
+    → Copie o bloco firebaseConfig que aparecer
+    → Cole substituindo os valores COLE_AQUI_... lá no topo deste arquivo
+
+ 4. Ativar Autenticação Google:
+    → Menu lateral: Build → Authentication → Get started
+    → Aba "Sign-in method" → Google → Ativar → Salvar
+
+ 5. Ativar Banco de Dados (Firestore):
+    → Menu lateral: Build → Firestore Database → Create database
+    → Escolha "Start in test mode" → Avançar → Selecione a região → Criar
+
+ 6. Configurar regras do Firestore para cada usuário ver só os seus dados:
+    → Firestore Database → aba "Rules" → cole isso e publique:
+
+    rules_version = '2';
+    service cloud.firestore {
+      match /databases/{database}/documents {
+        match /sessoes/{sessaoId} {
+          allow read, write: if request.auth != null && request.auth.uid == resource.data.uid;
+          allow create: if request.auth != null && request.auth.uid == request.resource.data.uid;
+        }
+      }
+    }
+
+ 7. Criar índice (necessário para a query funcionar):
+    → Firestore Database → aba "Indexes" → Add index
+    → Collection: sessoes
+    → Fields: uid (Ascending), criadoEm (Descending)
+    → Clique em "Create"
+    (ou simplesmente abra o app e o console vai mostrar um link direto pra criar)
+
+ 8. Suba o arquivo no GitHub Pages e pronto! ✅
+
+═══════════════════════════════════════════════════════════
+-->
+
 </body>
 </html>
+
