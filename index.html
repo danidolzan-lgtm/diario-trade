@@ -124,6 +124,15 @@ async function salvarSessao() {
     s.fireId = docRef.id;
     sessoes.unshift(s);
     atualizarContador();
+
+    if(document.getElementById('sec-historico')?.classList.contains('active')){
+      renderHistorico();
+    }
+
+    if(document.getElementById('sec-dashboard')?.classList.contains('active')){
+      renderDashboard();
+    }
+
     mostrarMsg('✅ Sessão salva com sucesso!', true);
     ['inp-lucro','inp-obs','e1-valor','e2-valor'].forEach(id => document.getElementById(id).value = '');
     ['e1-res','e2-res'].forEach(id => document.getElementById(id).value = 'win');
@@ -344,11 +353,22 @@ window._deletar  = deletarSessao;
 window._zerar    = zerarTudo;
 window._tab      = switchTab;
 window._soros2   = toggleSoros2;
+window.renderHistorico = renderHistorico;
 
 /* ── init: data de hoje ── */
-const today=new Date();
-document.getElementById('inp-data').value=
-  today.getFullYear()+'-'+String(today.getMonth()+1).padStart(2,'0')+'-'+String(today.getDate()).padStart(2,'0');
+document.addEventListener('DOMContentLoaded', () => {
+
+  const today = new Date();
+  const inpData = document.getElementById('inp-data');
+
+  if(inpData){
+    inpData.value =
+      today.getFullYear() + '-' +
+      String(today.getMonth()+1).padStart(2,'0') + '-' +
+      String(today.getDate()).padStart(2,'0');
+  }
+
+});
 
 </script>
 
