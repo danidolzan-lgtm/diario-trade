@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Diário de Trade — Danrlei Dolzan</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
 
 <!-- ═══════════════════════════════════════════════════════
      FIREBASE — cole aqui as suas chaves do projeto
@@ -185,7 +184,8 @@ const fmtM = v => { const n=parseFloat(v)||0; return (n<0?'-':'')+'R$ '+Math.abs
 const fmtD = d => { if(!d) return ''; const p=d.split('-'); return p[2]+'/'+p[1]+'/'+p[0]; };
 
 function atualizarContador() {
-  return;
+  const t = sessoes.length;
+  document.getElementById('total-sessoes').textContent = t + ' sessã' + (t===1?'o':'ões');
 }
 function mostrarMsg(txt, ok) {
   const el = document.getElementById('msg-form');
@@ -275,16 +275,12 @@ function renderDashboard() {
   if(chartMS)chartMS.destroy();
   chartMS=new Chart(document.getElementById('chart-ms'),{type:'doughnut',
     data:{labels:['Meta','Stop'],datasets:[{data:[metas,total-metas],backgroundColor:['#3fb950','#f85149'],borderWidth:0,hoverOffset:4}]},
-    options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{display:false},
-    datalabels:{color:'#fff',font:{size:14,weight:'bold'},formatter:(value,ctx)=>{const total=ctx.dataset.data.reduce((a,b)=>a+b,0);return total?((value/total)*100).toFixed(1)+'%':'0%';}}}},
-    plugins:[ChartDataLabels]});
+    options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{display:false}}}});
 
   if(chartDisc)chartDisc.destroy();
   chartDisc=new Chart(document.getElementById('chart-disc'),{type:'doughnut',
     data:{labels:['Fiz tudo certo','Cometi erro'],datasets:[{data:[discOk,total-discOk],backgroundColor:['#58a6ff','#d29922'],borderWidth:0,hoverOffset:4}]},
-    options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{display:false},
-    datalabels:{color:'#fff',font:{size:14,weight:'bold'},formatter:(value,ctx)=>{const total=ctx.dataset.data.reduce((a,b)=>a+b,0);return total?((value/total)*100).toFixed(1)+'%':'0%';}}}},
-    plugins:[ChartDataLabels]});
+    options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{display:false}}}});
 
   const sorted=[...sessoes].sort((a,b)=>a.data>b.data?1:-1);
   let acc=0;
@@ -384,6 +380,7 @@ header h1{font-size:20px;font-weight:600;display:flex;align-items:center;gap:8px
 #user-name{font-size:13px;color:var(--muted);}
 .btn-logout{background:transparent;border:1px solid var(--border);color:var(--muted);font-size:12px;padding:5px 10px;border-radius:var(--radius-sm);cursor:pointer;}
 .btn-logout:hover{border-color:var(--red);color:var(--red-text);}
+#total-sessoes{font-size:12px;color:var(--muted);}
 
 /* ── loading ── */
 #loading{display:none;position:fixed;inset:0;background:rgba(13,17,23,0.85);z-index:99;align-items:center;justify-content:center;flex-direction:column;gap:14px;font-size:14px;color:var(--muted);}
@@ -444,10 +441,10 @@ select option{background:var(--bg2);}
 /* ── metrics ── */
 .grid-5{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:14px;}
 .grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-bottom:14px;}
-.grid-4s{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;}
-.metric{background:var(--bg3);border-radius:var(--radius-sm);padding:14px;border:1px solid var(--border);}
+.grid-4s{display:grid;grid-template-columns:repeat(4,minmax(140px,1fr));gap:10px;}
+.metric{background:var(--bg3);border-radius:var(--radius-sm);padding:14px;border:1px solid var(--border);min-height:95px;display:flex;flex-direction:column;justify-content:center;}
 .metric-label{font-size:11px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.04em;}
-.metric-val{font-size:24px;font-weight:600;}
+.metric-val{font-size:20px;font-weight:700;white-space:nowrap;}
 
 /* ── pct bar ── */
 .pct-bar-wrap{display:flex;align-items:center;gap:8px;margin-top:5px;}
@@ -504,6 +501,7 @@ tr:hover td{background:rgba(255,255,255,0.02);}
       <div class="user-info">
         <img id="user-photo" src="" alt="foto" style="display:none;">
         <span id="user-name"></span>
+        <span id="total-sessoes">0 sessões</span>
         <button class="btn-logout" onclick="window._logout()">Sair</button>
       </div>
     </header>
