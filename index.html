@@ -185,7 +185,9 @@ const fmtM = v => { const n=parseFloat(v)||0; return (n<0?'-':'')+'R$ '+Math.abs
 const fmtD = d => { if(!d) return ''; const p=d.split('-'); return p[2]+'/'+p[1]+'/'+p[0]; };
 
 function atualizarContador() {
-  return;
+  const t = sessoes.length;
+  const el = document.getElementById('total-sessoes');
+  if(el) el.textContent = t + ' sessã' + (t===1?'o':'ões');
 }
 function mostrarMsg(txt, ok) {
   const el = document.getElementById('msg-form');
@@ -446,7 +448,7 @@ select option{background:var(--bg2);}
 .grid-2{display:grid;grid-template-columns:repeat(2,1fr);gap:14px;margin-bottom:14px;}
 .grid-4s{
   display:grid;
-  grid-template-columns:repeat(4,minmax(140px,1fr));
+  grid-template-columns:repeat(4,1fr);
   gap:10px;
 }
 .metric{
