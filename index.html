@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Diário de Trade — Danrlei Dolzan</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
 
 <!-- ═══════════════════════════════════════════════════════
      FIREBASE — cole aqui as suas chaves do projeto
@@ -184,8 +185,7 @@ const fmtM = v => { const n=parseFloat(v)||0; return (n<0?'-':'')+'R$ '+Math.abs
 const fmtD = d => { if(!d) return ''; const p=d.split('-'); return p[2]+'/'+p[1]+'/'+p[0]; };
 
 function atualizarContador() {
-  const t = sessoes.length;
-  document.getElementById('total-sessoes').textContent = t + ' sessã' + (t===1?'o':'ões');
+  return;
 }
 function mostrarMsg(txt, ok) {
   const el = document.getElementById('msg-form');
@@ -275,12 +275,16 @@ function renderDashboard() {
   if(chartMS)chartMS.destroy();
   chartMS=new Chart(document.getElementById('chart-ms'),{type:'doughnut',
     data:{labels:['Meta','Stop'],datasets:[{data:[metas,total-metas],backgroundColor:['#3fb950','#f85149'],borderWidth:0,hoverOffset:4}]},
-    options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{display:false}}}});
+    options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{display:false},
+    datalabels:{color:'#fff',font:{size:14,weight:'bold'},formatter:(value,ctx)=>{const total=ctx.dataset.data.reduce((a,b)=>a+b,0);return total?((value/total)*100).toFixed(1)+'%':'0%';}}}},
+    plugins:[ChartDataLabels]});
 
   if(chartDisc)chartDisc.destroy();
   chartDisc=new Chart(document.getElementById('chart-disc'),{type:'doughnut',
     data:{labels:['Fiz tudo certo','Cometi erro'],datasets:[{data:[discOk,total-discOk],backgroundColor:['#58a6ff','#d29922'],borderWidth:0,hoverOffset:4}]},
-    options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{display:false}}}});
+    options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{display:false},
+    datalabels:{color:'#fff',font:{size:14,weight:'bold'},formatter:(value,ctx)=>{const total=ctx.dataset.data.reduce((a,b)=>a+b,0);return total?((value/total)*100).toFixed(1)+'%':'0%';}}}},
+    plugins:[ChartDataLabels]});
 
   const sorted=[...sessoes].sort((a,b)=>a.data>b.data?1:-1);
   let acc=0;
@@ -380,7 +384,6 @@ header h1{font-size:20px;font-weight:600;display:flex;align-items:center;gap:8px
 #user-name{font-size:13px;color:var(--muted);}
 .btn-logout{background:transparent;border:1px solid var(--border);color:var(--muted);font-size:12px;padding:5px 10px;border-radius:var(--radius-sm);cursor:pointer;}
 .btn-logout:hover{border-color:var(--red);color:var(--red-text);}
-#total-sessoes{font-size:12px;color:var(--muted);}
 
 /* ── loading ── */
 #loading{display:none;position:fixed;inset:0;background:rgba(13,17,23,0.85);z-index:99;align-items:center;justify-content:center;flex-direction:column;gap:14px;font-size:14px;color:var(--muted);}
@@ -501,7 +504,6 @@ tr:hover td{background:rgba(255,255,255,0.02);}
       <div class="user-info">
         <img id="user-photo" src="" alt="foto" style="display:none;">
         <span id="user-name"></span>
-        <span id="total-sessoes">0 sessões</span>
         <button class="btn-logout" onclick="window._logout()">Sair</button>
       </div>
     </header>
