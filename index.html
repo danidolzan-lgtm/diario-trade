@@ -266,10 +266,10 @@ function renderDashboard() {
     const m=arr.filter(s=>s.resultado==='meta').length,lucro=arr.reduce((a,s)=>a+s.lucro,0),pa=calcAssert(arr);
     document.getElementById(elId).innerHTML=`
       <div class="grid-4s">
-        <div class="metric"><div class="metric-label">Sessões</div><div class="metric-val" style="font-size:20px;">${arr.length}</div></div>
-        <div class="metric"><div class="metric-label">Taxa meta</div><div class="metric-val" style="font-size:20px;color:var(--green-text);">${((m/arr.length)*100).toFixed(0)}%</div></div>
-        <div class="metric"><div class="metric-label">Assertividade</div><div class="metric-val" style="font-size:20px;color:var(--blue);">${pa.pct}%</div></div>
-        <div class="metric"><div class="metric-label">Lucro</div><div class="metric-val ${lucro>=0?'pos':'neg'}" style="font-size:20px;">${fmtM(lucro)}</div></div>
+        <div class="metric"><div class="metric-label">Sessões</div><div class="metric-val">${arr.length}</div></div>
+        <div class="metric"><div class="metric-label">Taxa meta</div><div class="metric-val" style="color:var(--green-text);">${((m/arr.length)*100).toFixed(0)}%</div></div>
+        <div class="metric"><div class="metric-label">Assertividade</div><div class="metric-val" style="color:var(--blue);">${pa.pct}%</div></div>
+        <div class="metric"><div class="metric-label">Lucro</div><div class="metric-val ${lucro>=0?'pos':'neg'}">${fmtM(lucro)}</div></div>
       </div>`;}
   periodoCard(md,'stat-meio'); periodoCard(nt,'stat-noite');
 
@@ -402,7 +402,7 @@ header h1{font-size:20px;font-weight:600;display:flex;align-items:center;gap:8px
 .section{display:none;}.section.active{display:block;}
 
 /* ── card ── */
-.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;margin-bottom:14px;}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:18px 20px;margin-bottom:14px;min-width:0;overflow:hidden;}
 
 /* ── form ── */
 .form-row{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:12px;}
@@ -449,21 +449,21 @@ select option{background:var(--bg2);}
 .grid-4s{
   display:grid;
   grid-template-columns:repeat(4,1fr);
-  gap:10px;
+  gap:8px;
+  width:100%;
+  min-width:0;
 }
 .metric{
   background:var(--bg3);
   border-radius:var(--radius-sm);
-  padding:14px;
+  padding:12px;
   border:1px solid var(--border);
-  min-height:95px;
-  display:flex;
-  flex-direction:column;
-  justify-content:center;
+  min-width:0;
+  overflow:hidden;
 }
-.metric-label{font-size:11px;color:var(--muted);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.04em;}
+.metric-label{font-size:10px;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:0.04em;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
 .metric-val{
-  font-size:20px;
+  font-size:18px;
   font-weight:700;
   white-space:nowrap;
   overflow:hidden;
