@@ -1,155 +1,191 @@
 <!DOCTYPE html>
 <html lang="pt-br">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Diário de Trade</title>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Trading Journal Pro</title>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 
 <style>
 :root{
   --bg:#0b1220;
-  --card:#111a2e;
+  --card:rgba(255,255,255,0.05);
   --border:rgba(255,255,255,0.08);
   --text:#e5e7eb;
   --muted:#94a3b8;
   --green:#22c55e;
   --red:#ef4444;
   --blue:#60a5fa;
-  --radius:14px;
 }
 
-*{box-sizing:border-box;margin:0;padding:0;}
-
 body{
+  margin:0;
   font-family:Arial;
   background:var(--bg);
   color:var(--text);
-  padding:20px;
 }
 
-/* TABS */
-.tabs{display:flex;gap:6px;border-bottom:1px solid var(--border);margin:15px 0;}
+header{
+  padding:20px;
+  display:flex;
+  justify-content:space-between;
+}
+
+.tabs{
+  display:flex;
+  gap:10px;
+  padding:0 20px;
+}
+
 .tab{
-  padding:10px 14px;
   background:none;
   border:none;
   color:var(--muted);
   cursor:pointer;
+  padding:10px;
   border-bottom:2px solid transparent;
 }
-.tab.active{color:white;border-bottom:2px solid var(--blue);}
 
-.section{display:none;}
+.tab.active{
+  color:white;
+  border-bottom:2px solid var(--blue);
+}
+
+.section{display:none;padding:20px;}
 .section.active{display:block;}
 
-/* CARD */
 .card{
   background:var(--card);
   border:1px solid var(--border);
-  border-radius:var(--radius);
-  padding:14px;
-  margin-bottom:12px;
+  padding:15px;
+  border-radius:12px;
+  margin-bottom:15px;
 }
 
-/* INPUT */
 input,select{
   width:100%;
-  padding:10px;
+  padding:8px;
   margin-top:5px;
-  margin-bottom:10px;
-  border-radius:10px;
+  border-radius:8px;
   border:1px solid var(--border);
-  background:#0f172a;
+  background:transparent;
   color:white;
 }
 
-/* BUTTON */
 button{
-  padding:10px 14px;
-  border-radius:10px;
+  padding:10px 12px;
   border:none;
+  border-radius:10px;
   cursor:pointer;
 }
 
 .btn{
-  background:#1f2937;
+  background:var(--blue);
   color:white;
 }
 
-.btn-primary{
-  background:linear-gradient(135deg,var(--green),#16a34a);
+.grid{
+  display:grid;
+  grid-template-columns:repeat(3,1fr);
+  gap:10px;
 }
 
-/* GRID */
-.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;}
-
-/* TABLE */
-table{width:100%;border-collapse:collapse;font-size:12px;}
-th,td{padding:8px;border-bottom:1px solid var(--border);}
-
-/* METRIC */
-.metric{
-  background:#0f172a;
-  padding:12px;
-  border-radius:10px;
+.small{
+  font-size:12px;
+  color:var(--muted);
 }
-
-/* COLORS */
-.pos{color:var(--green);}
-.neg{color:var(--red);}
-
-canvas{height:220px !important;}
 </style>
 </head>
 
 <body>
 
-<h2>📊 Diário de Trade PRO</h2>
+<header>
+  <h2>📊 Trading Journal Pro</h2>
+</header>
 
 <div class="tabs">
-  <button class="tab active" onclick="switchTab('reg')">Registrar</button>
-  <button class="tab" onclick="switchTab('dash')">Dashboard</button>
-  <button class="tab" onclick="switchTab('hist')">Histórico</button>
+  <button class="tab active" onclick="tab('reg',event)">Registrar</button>
+  <button class="tab" onclick="tab('dash',event)">Dashboard</button>
+  <button class="tab" onclick="tab('hist',event)">Histórico</button>
 </div>
 
 <!-- REG -->
 <div id="reg" class="section active">
   <div class="card">
-    <h3>Nova sessão</h3>
 
-    <label>Data</label>
-    <input type="date" id="data">
+    <div class="grid">
+      <div>
+        <div class="small">Data</div>
+        <input type="date" id="data">
+      </div>
 
-    <label>Lucro</label>
-    <input type="number" id="lucro">
+      <div>
+        <div class="small">Lucro</div>
+        <input type="number" id="lucro">
+      </div>
 
-    <label>Resultado</label>
-    <select id="resultado">
-      <option value="meta">Meta</option>
-      <option value="stop">Stop</option>
-    </select>
+      <div>
+        <div class="small">Resultado</div>
+        <select id="resultado">
+          <option value="meta">Meta</option>
+          <option value="stop">Stop</option>
+        </select>
+      </div>
+    </div>
 
-    <label>Disciplina</label>
-    <select id="disc">
-      <option value="ok">Ok</option>
-      <option value="erro">Erro</option>
-    </select>
+    <hr style="margin:15px 0;opacity:0.2">
 
-    <button class="btn-primary" onclick="save()">Salvar</button>
+    <div class="grid">
+      <div>
+        <div class="small">OP 1 Nome</div>
+        <input id="op1nome" placeholder="Ex: Tendência M1">
+      </div>
+
+      <div>
+        <div class="small">OP 1</div>
+        <select id="op1res">
+          <option value="win">Win</option>
+          <option value="loss">Loss</option>
+        </select>
+      </div>
+
+      <div>
+        <div class="small">Valor OP1</div>
+        <input id="op1val" type="number">
+      </div>
+    </div>
+
+    <br>
+
+    <div class="grid">
+      <div>
+        <div class="small">OP 2 Nome (opcional)</div>
+        <input id="op2nome" placeholder="Pode deixar vazio">
+      </div>
+
+      <div>
+        <div class="small">OP 2</div>
+        <select id="op2res">
+          <option value="win">Win</option>
+          <option value="loss">Loss</option>
+        </select>
+      </div>
+
+      <div>
+        <div class="small">Valor OP2</div>
+        <input id="op2val" type="number">
+      </div>
+    </div>
+
+    <br>
+
+    <button class="btn" onclick="add()">Salvar trade</button>
   </div>
 </div>
 
 <!-- DASH -->
 <div id="dash" class="section">
-  <div class="grid">
-    <div class="metric">Total: <span id="total">0</span></div>
-    <div class="metric">Lucro: <span id="profit">0</span></div>
-    <div class="metric">Meta %: <span id="meta">0</span></div>
-    <div class="metric">Disciplina: <span id="disciplina">0</span></div>
-  </div>
-
   <div class="card">
     <canvas id="chart"></canvas>
   </div>
@@ -158,99 +194,109 @@ canvas{height:220px !important;}
 <!-- HIST -->
 <div id="hist" class="section">
   <div class="card">
-    <table>
+    <table width="100%">
       <thead>
         <tr>
           <th>Data</th>
           <th>Lucro</th>
-          <th>Resultado</th>
-          <th>Disciplina</th>
+          <th>OP1</th>
+          <th>OP2</th>
+          <th></th>
         </tr>
       </thead>
-      <tbody id="list"></tbody>
+      <tbody id="table"></tbody>
     </table>
   </div>
 </div>
 
 <script>
-let sessoes = [];
-let chart;
+let data = JSON.parse(localStorage.getItem("trades")||"[]");
 
-/* TAB */
-function switchTab(t){
-  document.querySelectorAll('.section').forEach(s=>s.classList.remove('active'));
-  document.getElementById(t).classList.add('active');
-
-  document.querySelectorAll('.tab').forEach(b=>b.classList.remove('active'));
-  event.target.classList.add('active');
-
-  if(t==='dash') renderDash();
-  if(t==='hist') renderHist();
+function save(){
+  localStorage.setItem("trades",JSON.stringify(data));
 }
 
-/* SAVE */
-function save(){
-  const s = {
-    data: data.value,
-    lucro: parseFloat(lucro.value)||0,
-    resultado: resultado.value,
-    disc: disc.value
+function add(){
+
+  let item = {
+    data:document.getElementById("data").value,
+    lucro:parseFloat(document.getElementById("lucro").value||0),
+    resultado:document.getElementById("resultado").value,
+
+    op1:{
+      nome:document.getElementById("op1nome").value,
+      res:document.getElementById("op1res").value,
+      val:document.getElementById("op1val").value
+    },
+
+    op2:{
+      nome:document.getElementById("op2nome").value,
+      res:document.getElementById("op2res").value,
+      val:document.getElementById("op2val").value
+    }
   };
 
-  sessoes.unshift(s);
-  localStorage.setItem("trade", JSON.stringify(sessoes));
-
-  renderDash();
+  data.unshift(item);
+  save();
+  render();
 }
 
-/* DASH */
-function renderDash(){
-  const total = sessoes.length;
-  const lucroTotal = sessoes.reduce((a,b)=>a+b.lucro,0);
-  const meta = sessoes.filter(s=>s.resultado==='meta').length;
-  const disc = sessoes.filter(s=>s.disc==='ok').length;
+function tab(id,e){
+  document.querySelectorAll(".section").forEach(s=>s.classList.remove("active"));
+  document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
 
-  totalEl.innerText = total;
-  profit.innerText = "R$ "+lucroTotal.toFixed(2);
-  metaEl.innerText = total?((meta/total)*100).toFixed(1):0;
-  disciplina.innerText = total?((disc/total)*100).toFixed(1):0;
+  document.getElementById(id).classList.add("active");
+  e.target.classList.add("active");
 
-  const labels = sessoes.map(s=>s.data);
-  const dataChart = sessoes.map(s=>s.lucro);
+  if(id==="dash") draw();
+  if(id==="hist") renderTable();
+}
 
-  if(chart) chart.destroy();
+function renderTable(){
+  let html="";
+  data.forEach((d,i)=>{
+    html+=`
+      <tr>
+        <td>${d.data}</td>
+        <td>${d.lucro}</td>
+        <td>${d.op1.nome} (${d.op1.res})</td>
+        <td>${d.op2.nome || "-"}</td>
+        <td><button onclick="del(${i})">X</button></td>
+      </tr>
+    `;
+  });
+  document.getElementById("table").innerHTML=html;
+}
 
-  chart = new Chart(document.getElementById('chart'),{
-    type:'line',
+function del(i){
+  data.splice(i,1);
+  save();
+  render();
+}
+
+function draw(){
+  let ctx=document.getElementById("chart");
+
+  let labels=data.map(d=>d.data);
+  let values=data.map(d=>d.lucro);
+
+  new Chart(ctx,{
+    type:"line",
     data:{
       labels,
       datasets:[{
-        label:'Lucro',
-        data:dataChart,
-        borderColor:'#60a5fa',
-        fill:true
+        label:"Lucro",
+        data:values,
+        borderColor:"#60a5fa"
       }]
     }
   });
 }
 
-/* HIST */
-function renderHist(){
-  list.innerHTML = sessoes.map(s=>`
-    <tr>
-      <td>${s.data}</td>
-      <td class="${s.lucro>=0?'pos':'neg'}">${s.lucro}</td>
-      <td>${s.resultado}</td>
-      <td>${s.disc}</td>
-    </tr>
-  `).join('');
+function render(){
+  renderTable();
 }
-
-/* INIT */
-window.onload=()=>{
-  sessoes = JSON.parse(localStorage.getItem("trade"))||[];
-  renderDash();
-};
+render();
 </script>
 
 </body>
