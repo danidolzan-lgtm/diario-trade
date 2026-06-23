@@ -209,27 +209,36 @@ function mostrarMsg(txt, ok) {
 function mostrarLoading(show) {
   document.getElementById('loading').style.display = show ? 'flex' : 'none';
 }
+
 const pBadge = v => v==='op1'
-  ? '<span class="badge badge-op1">OP-01</span>'
-  : '<span class="badge badge-op2">OP-02</span>';
+  ? '<span class="badge badge-op1">OP 01 Pullback</span>'
+  : v==='op2' 
+  ? '<span class="badge badge-op2">OP 02 Reversão</span>' 
+  : '<span class="badge badge-op3">OP 03 Continuação</span>';
 
 /* ════════════════════════════════════════
    ASSERTIVIDADE
 ════════════════════════════════════════ */
 function calcAssert(arr) {
-  let tot=0,wins=0,op1t=0,op1w=0,op2t=0,op2w=0;
+  let tot=0,wins=0,op1t=0,op1w=0,op2t=0,op2w=0,op3t=0,op3w=0;
   arr.forEach(s=>{
     tot++; if(s.e1_res==='win') wins++;
-    if(s.e1_setup==='op1'){op1t++;if(s.e1_res==='win')op1w++;}else{op2t++;if(s.e1_res==='win')op2w++;}
+    if(s.e1_setup==='op1'){op1t++;if(s.e1_res==='win')op1w++;}
+    else if(s.e1_setup==='op2'){op2t++;if(s.e1_res==='win')op2w++;}
+    else if(s.e1_setup==='op3'){op3t++;if(s.e1_res==='win')op3w++;}
+
     if(s.e2_ativo&&s.e2_valor){
       tot++;if(s.e2_res==='win')wins++;
-      if(s.e2_setup==='op1'){op1t++;if(s.e2_res==='win')op1w++;}else{op2t++;if(s.e2_res==='win')op2w++;}
+      if(s.e2_setup==='op1'){op1t++;if(s.e2_res==='win')op1w++;}
+      else if(s.e2_setup==='op2'){op2t++;if(s.e2_res==='win')op2w++;}
+      else if(s.e2_setup==='op3'){op3t++;if(s.e2_res==='win')op3w++;}
     }
   });
-  return {tot,wins,op1t,op1w,op2t,op2w,
+  return {tot,wins,op1t,op1w,op2t,op2w,op3t,op3w,
     pct:   tot >0?((wins/tot)*100).toFixed(1):'0.0',
     op1pct:op1t>0?((op1w/op1t)*100).toFixed(1):'0.0',
-    op2pct:op2t>0?((op2w/op2t)*100).toFixed(1):'0.0'};
+    op2pct:op2t>0?((op2w/op2t)*100).toFixed(1):'0.0',
+    op3pct:op3t>0?((op3w/op3t)*100).toFixed(1):'0.0'};
 }
 function pctBarHtml(pct, color) {
   const v=parseFloat(pct)||0;
@@ -265,8 +274,9 @@ function renderDashboard() {
         .map(c=>`<div>
           <div style="font-size:11px;font-weight:600;color:var(--muted);letter-spacing:0.04em;">${c.title} — ${c.sub}</div>
           ${pctBarHtml(c.a.pct,'#39d353')}
-          <div class="assert-row-label">OP-01 Tendência</div>${pctBarHtml(c.a.op1pct,'#58a6ff')}
-          <div class="assert-row-label">OP-02 Lateral</div>${pctBarHtml(c.a.op2pct,'#d29922')}
+          <div class="assert-row-label">OP 01 Pullback</div>${pctBarHtml(c.a.op1pct,'#58a6ff')}
+          <div class="assert-row-label">OP 02 Reversão</div>${pctBarHtml(c.a.op2pct,'#d29922')}
+          <div class="assert-row-label">OP 03 Continuação</div>${pctBarHtml(c.a.op3pct,'#bc8cff')}
         </div>`).join('')}
     </div>`;
 
@@ -462,6 +472,7 @@ select option{background:var(--bg2);}
 .badge-noite{background:rgba(30,20,60,0.8);color:#a78bfa;border:1px solid rgba(167,139,250,0.25);}
 .badge-op1  {background:rgba(20,60,40,0.6);color:#6ee7b7;border:1px solid rgba(110,231,183,0.2);font-size:10px;}
 .badge-op2  {background:rgba(60,40,10,0.6);color:#fcd34d;border:1px solid rgba(252,211,77,0.2);font-size:10px;}
+.badge-op3  {background:rgba(30,20,60,0.6);color:#bc8cff;border:1px solid rgba(188,140,255,0.2);font-size:10px;}
 
 /* ── metrics ── */
 .grid-5{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:14px;}
@@ -579,7 +590,11 @@ tr:hover td{background:rgba(255,255,255,0.02);}
           <div class="soros-header"><span>Entrada 1</span></div>
           <div class="form-row" style="margin-bottom:0;">
             <div class="field"><label>Setup</label>
-              <select id="e1-setup"><option value="op1">OP-01 — Tendência</option><option value="op2">OP-02 — Lateral</option></select>
+              <select id="e1-setup">
+                <option value="op1">OP 01 Pullback</option>
+                <option value="op2">OP 02 Reversão</option>
+                <option value="op3">OP 03 Continuação</option>
+              </select>
             </div>
             <div class="field"><label>Valor (R$)</label><input type="number" id="e1-valor" min="0" step="0.01" placeholder="0,00"></div>
             <div class="field"><label>Resultado</label>
@@ -595,7 +610,11 @@ tr:hover td{background:rgba(255,255,255,0.02);}
           </div>
           <div class="form-row" style="margin-bottom:0;">
             <div class="field"><label>Setup</label>
-              <select id="e2-setup"><option value="op1">OP-01 — Tendência</option><option value="op2">OP-02 — Lateral</option></select>
+              <select id="e2-setup">
+                <option value="op1">OP 01 Pullback</option>
+                <option value="op2">OP 02 Reversão</option>
+                <option value="op3">OP 03 Continuação</option>
+              </select>
             </div>
             <div class="field"><label>Valor (R$)</label><input type="number" id="e2-valor" min="0" step="0.01" placeholder="0,00"></div>
             <div class="field"><label>Resultado</label>
@@ -716,4 +735,3 @@ tr:hover td{background:rgba(255,255,255,0.02);}
 
 </body>
 </html>
-
