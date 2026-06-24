@@ -7,10 +7,6 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2"></script>
 
-<!-- ═══════════════════════════════════════════════════════
-     FIREBASE — cole aqui as suas chaves do projeto
-     Veja o passo a passo no final deste arquivo
-════════════════════════════════════════════════════════ -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import { getAuth, GoogleAuthProvider, signInWithPopup, signOut, onAuthStateChanged }
@@ -540,10 +536,8 @@ tr:hover td{background:rgba(255,255,255,0.02);}
 </head>
 <body>
 
-<!-- ── loading overlay ── -->
 <div id="loading"><div class="spinner"></div>Carregando sessões...</div>
 
-<!-- ═══════════════════ TELA DE LOGIN ═══════════════════ -->
 <div id="tela-login">
   <div class="login-card">
     <div style="font-size:40px;margin-bottom:12px;">📊</div>
@@ -556,7 +550,6 @@ tr:hover td{background:rgba(255,255,255,0.02);}
   </div>
 </div>
 
-<!-- ═══════════════════ TELA DO APP ═══════════════════ -->
 <div id="tela-app">
   <div class="app">
     <header>
@@ -574,7 +567,6 @@ tr:hover td{background:rgba(255,255,255,0.02);}
       <button class="tab" onclick="window._tab('historico',this)">📋 Histórico</button>
     </div>
 
-    <!-- REGISTRAR -->
     <div id="sec-registrar" class="section active">
       <div class="card">
         <div class="sec-title">Nova sessão</div>
@@ -643,7 +635,7 @@ tr:hover td{background:rgba(255,255,255,0.02);}
         <div class="form-row">
           <div class="field" style="flex:1;">
             <label>Observação (opcional)</label>
-            <textarea id="inp-obs" placeholder="Setup, condition do mercado, erros cometidos..."></textarea>
+            <textarea id="inp-obs" placeholder="Setup, condição do mercado, erros cometidos..."></textarea>
           </div>
         </div>
         <div style="display:flex;justify-content:flex-end;">
@@ -653,7 +645,6 @@ tr:hover td{background:rgba(255,255,255,0.02);}
       </div>
     </div>
 
-    <!-- DASHBOARD -->
     <div id="sec-dashboard" class="section">
       <div class="grid-5" id="dash-metrics"></div>
       <div class="grid-2">
@@ -671,7 +662,6 @@ tr:hover td{background:rgba(255,255,255,0.02);}
       <div class="card"><div class="sec-title">Disciplina</div><div class="chart-wrap" style="height:160px;"><canvas id="chart-disc"></canvas></div></div>
     </div>
 
-    <!-- HISTÓRICO -->
     <div id="sec-historico" class="section">
       <div class="hist-toolbar">
         <select id="filtro-periodo" onchange="renderHistorico()">
@@ -688,8 +678,6 @@ tr:hover td{background:rgba(255,255,255,0.02);}
 
   </div>
 </div>
-
-<!-- Passos de configuração omitidos do bloco de visualização -->
 
 </body>
 </html>
