@@ -284,11 +284,11 @@ function renderDashboard() {
     if(!arr.length){document.getElementById(elId).innerHTML='<div class="empty-state">Sem dados</div>';return;}
     const m=arr.filter(s=>s.resultado==='meta').length,lucro=arr.reduce((a,s)=>a+s.lucro,0),pa=calcAssert(arr);
     document.getElementById(elId).innerHTML=`
-      <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;width:100%;">
+      <div class="grid-card-periodo">
         <div class="metric"><div class="metric-label">Sessões</div><div class="metric-val">${arr.length}</div></div>
         <div class="metric"><div class="metric-label">Taxa meta</div><div class="metric-val" style="color:var(--green-text);">${((m/arr.length)*100).toFixed(0)}%</div></div>
         <div class="metric"><div class="metric-label">Assertividade</div><div class="metric-val" style="color:var(--blue);">${pa.pct}%</div></div>
-        <div class="metric" style="grid-column:span 3;"><div class="metric-label">Lucro</div><div class="metric-val ${lucro>=0?'pos':'neg'}" style="font-size:22px;">${fmtM(lucro)}</div></div>
+        <div class="metric"><div class="metric-label">Lucro</div><div class="metric-val ${lucro>=0?'pos':'neg'}">${fmtM(lucro)}</div></div>
       </div>`;}
   periodoCard(md,'stat-meio'); periodoCard(nt,'stat-noite');
 
@@ -484,6 +484,12 @@ select option{background:var(--bg2);}
   width:100%;
   min-width:0;
 }
+.grid-card-periodo{
+  display:grid;
+  grid-template-columns:repeat(2, 1fr);
+  gap:8px;
+  width:100%;
+}
 .metric{
   background:var(--bg3);
   border-radius:var(--radius-sm);
@@ -527,7 +533,8 @@ tr:hover td{background:rgba(255,255,255,0.02);}
   .grid-5{grid-template-columns:repeat(2,1fr);}
   .grid-2{grid-template-columns:1fr;}
   .grid-4s{grid-template-columns:1fr 1fr;}
-  .metric-val{font-size:16px;}
+  .grid-card-periodo{grid-template-columns:1fr 1fr;}
+  .metric-val{font-size:15px;}
 }
 </style>
 </head>
@@ -636,7 +643,7 @@ tr:hover td{background:rgba(255,255,255,0.02);}
         <div class="form-row">
           <div class="field" style="flex:1;">
             <label>Observação (opcional)</label>
-            <textarea id="inp-obs" placeholder="Setup, condição do mercado, erros cometidos..."></textarea>
+            <textarea id="inp-obs" placeholder="Setup, condition do mercado, erros cometidos..."></textarea>
           </div>
         </div>
         <div style="display:flex;justify-content:flex-end;">
@@ -682,56 +689,7 @@ tr:hover td{background:rgba(255,255,255,0.02);}
   </div>
 </div>
 
-<!--
-═══════════════════════════════════════════════════════════
- 📋 PASSO A PASSO — CONFIGURAR FIREBASE (5 minutos)
-═══════════════════════════════════════════════════════════
-
- 1. Acesse https://firebase.google.com e clique em "Ir para o console"
-
- 2. Clique em "Criar um projeto"
-    → Dê um nome (ex: diario-trade-danrlei)
-    → Pode desativar o Google Analytics
-    → Clique em "Criar projeto"
-
- 3. No painel do projeto, clique no ícone </> (Web) para registrar o app
-    → Dê um apelido (ex: diario-trade)
-    → Clique em "Registrar app"
-    → Copie o bloco firebaseConfig que aparecer
-    → Cole substituindo os valores COLE_AQUI_... lá no topo deste arquivo
-
- 4. Ativar Autenticação Google:
-    → Menu lateral: Build → Authentication → Get started
-    → Aba "Sign-in method" → Google → Ativar → Salvar
-
- 5. Ativar Banco de Dados (Firestore):
-    → Menu lateral: Build → Firestore Database → Create database
-    → Escolha "Start in test mode" → Avançar → Selecione a região → Criar
-
- 6. Configurar regras do Firestore para cada usuário ver só os seus dados:
-    → Firestore Database → aba "Rules" → cole isso e publique:
-
-    rules_version = '2';
-    service cloud.firestore {
-      match /databases/{database}/documents {
-        match /sessoes/{sessaoId} {
-          allow read, write: if request.auth != null && request.auth.uid == resource.data.uid;
-          allow create: if request.auth != null && request.auth.uid == request.resource.data.uid;
-        }
-      }
-    }
-
- 7. Criar índice (necessário para a query funcionar):
-    → Firestore Database → aba "Indexes" → Add index
-    → Collection: sessoes
-    → Fields: uid (Ascending), criadoEm (Descending)
-    → Clique em "Create"
-    (ou simplesmente abra o app e o console vai mostrar um link direto pra criar)
-
- 8. Suba o arquivo no GitHub Pages e pronto! ✅
-
-═══════════════════════════════════════════════════════════
--->
+<!-- Passos de configuração omitidos do bloco de visualização -->
 
 </body>
 </html>
