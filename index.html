@@ -210,31 +210,36 @@ const pBadge = v => v==='op1'
   ? '<span class="badge badge-op1">OP 01 Pullback</span>'
   : v==='op2' 
   ? '<span class="badge badge-op2">OP 02 Reversão</span>' 
-  : '<span class="badge badge-op3">OP 03 Continuação</span>';
+  : v==='op3'
+  ? '<span class="badge badge-op3">OP 03 Continuação</span>'
+  : '<span class="badge badge-op4">OP 04 Inversão</span>';
 
 /* ════════════════════════════════════════
    ASSERTIVIDADE
 ════════════════════════════════════════ */
 function calcAssert(arr) {
-  let tot=0,wins=0,op1t=0,op1w=0,op2t=0,op2w=0,op3t=0,op3w=0;
+  let tot=0,wins=0,op1t=0,op1w=0,op2t=0,op2w=0,op3t=0,op3w=0,op4t=0,op4w=0;
   arr.forEach(s=>{
     tot++; if(s.e1_res==='win') wins++;
     if(s.e1_setup==='op1'){op1t++;if(s.e1_res==='win')op1w++;}
     else if(s.e1_setup==='op2'){op2t++;if(s.e1_res==='win')op2w++;}
     else if(s.e1_setup==='op3'){op3t++;if(s.e1_res==='win')op3w++;}
+    else if(s.e1_setup==='op4'){op4t++;if(s.e1_res==='win')op4w++;}
 
     if(s.e2_ativo&&s.e2_valor){
       tot++;if(s.e2_res==='win')wins++;
       if(s.e2_setup==='op1'){op1t++;if(s.e2_res==='win')op1w++;}
       else if(s.e2_setup==='op2'){op2t++;if(s.e2_res==='win')op2w++;}
       else if(s.e2_setup==='op3'){op3t++;if(s.e2_res==='win')op3w++;}
+      else if(s.e2_setup==='op4'){op4t++;if(s.e2_res==='win')op4w++;}
     }
   });
-  return {tot,wins,op1t,op1w,op2t,op2w,op3t,op3w,
+  return {tot,wins,op1t,op1w,op2t,op2w,op3t,op3w,op4t,op4w,
     pct:   tot >0?((wins/tot)*100).toFixed(1):'0.0',
     op1pct:op1t>0?((op1w/op1t)*100).toFixed(1):'0.0',
     op2pct:op2t>0?((op2w/op2t)*100).toFixed(1):'0.0',
-    op3pct:op3t>0?((op3w/op3t)*100).toFixed(1):'0.0'};
+    op3pct:op3t>0?((op3w/op3t)*100).toFixed(1):'0.0',
+    op4pct:op4t>0?((op4w/op4t)*100).toFixed(1):'0.0'};
 }
 function pctBarHtml(pct, color) {
   const v=parseFloat(pct)||0;
@@ -273,6 +278,7 @@ function renderDashboard() {
           <div class="assert-row-label">OP 01 Pullback</div>${pctBarHtml(c.a.op1pct,'#58a6ff')}
           <div class="assert-row-label">OP 02 Reversão</div>${pctBarHtml(c.a.op2pct,'#d29922')}
           <div class="assert-row-label">OP 03 Continuação</div>${pctBarHtml(c.a.op3pct,'#bc8cff')}
+          <div class="assert-row-label">OP 04 Inversão</div>${pctBarHtml(c.a.op4pct,'#e74c3c')}
         </div>`).join('')}
     </div>`;
 
@@ -469,6 +475,7 @@ select option{background:var(--bg2);}
 .badge-op1  {background:rgba(20,60,40,0.6);color:#6ee7b7;border:1px solid rgba(110,231,183,0.2);font-size:10px;}
 .badge-op2  {background:rgba(60,40,10,0.6);color:#fcd34d;border:1px solid rgba(252,211,77,0.2);font-size:10px;}
 .badge-op3  {background:rgba(30,20,60,0.6);color:#bc8cff;border:1px solid rgba(188,140,255,0.2);font-size:10px;}
+.badge-op4  {background:rgba(120,30,30,0.6);color:#ff7b72;border:1px solid rgba(248,81,73,0.2);font-size:10px;}
 
 /* ── metrics ── */
 .grid-5{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:14px;}
@@ -593,6 +600,7 @@ tr:hover td{background:rgba(255,255,255,0.02);}
                 <option value="op1">OP 01 Pullback</option>
                 <option value="op2">OP 02 Reversão</option>
                 <option value="op3">OP 03 Continuação</option>
+                <option value="op4">OP 04 Inversão</option>
               </select>
             </div>
             <div class="field"><label>Valor (R$)</label><input type="number" id="e1-valor" min="0" step="0.01" placeholder="0,00"></div>
@@ -613,6 +621,7 @@ tr:hover td{background:rgba(255,255,255,0.02);}
                 <option value="op1">OP 01 Pullback</option>
                 <option value="op2">OP 02 Reversão</option>
                 <option value="op3">OP 03 Continuação</option>
+                <option value="op4">OP 04 Inversão</option>
               </select>
             </div>
             <div class="field"><label>Valor (R$)</label><input type="number" id="e2-valor" min="0" step="0.01" placeholder="0,00"></div>
@@ -635,7 +644,7 @@ tr:hover td{background:rgba(255,255,255,0.02);}
         <div class="form-row">
           <div class="field" style="flex:1;">
             <label>Observação (opcional)</label>
-            <textarea id="inp-obs" placeholder="Setup, condição do mercado, erros cometidos..."></textarea>
+            <textarea id="inp-obs" placeholder="Setup, condition do mercado, erros cometidos..."></textarea>
           </div>
         </div>
         <div style="display:flex;justify-content:flex-end;">
